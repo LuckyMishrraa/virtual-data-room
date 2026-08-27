@@ -1,0 +1,308 @@
+import uuid
+import os
+from app.config import get_utc_now
+from typing import List, Optional
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Query
+from fastapi.responses import StreamingResponse, Response
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.models.db_models import FileModel, PermissionModel
+from app.models.schemas import (
+    VDRFileResponse, VDRFileUpdate, SensitivityLevel, TreeNode,
+    BatchDeleteRequest, BatchTagRequest, BatchOperationResponse
+)
+from app.services.minio_service import minio_service
+from app.services.file_service import format_file_response, build_tree, delete_cascade
+from app.services.audit_service import log_activity
+
+router = APIRouter(prefix="/files", tags=["Files"])
+
+@router.get("", response_model=List[VDRFileResponse])
+def list_files(
+    parentId: Optional[str] = Query(None, description="Parent folder ID (omit or 'root' for top level)"),
+    search: Optional[str] = Query(None, description="Keyword search in file name"),
+    sensitivity: Optional[str] = Query(None, description="Filter by sensitivity tag"),
+    fileType: Optional[str] = Query(None, description="Filter by file extension e.g. .pdf"),
+    sortBy: Optional[str] = Query("name", description="Sort by: name, date, size, sensitivity"),
+    sortOrder: Optional[str] = Query("asc", description="Sort order: asc, desc"),
+    db: Session = Depends(get_db)
+):
+    query = db.query(FileModel)
+
+    if search:
+        query = query.filter(FileModel.name.ilike(f"%{search}%"))
+    elif parentId == "root" or parentId is None:
+        query = query.filter(FileModel.parent_id == None)
+    else:
+        query = query.filter(FileModel.parent_id == parentId)
+
+    if sensitivity:
+        query = query.filter(FileModel.sensitivity == sensitivity)
+
+    if fileType:
+        if not fileType.startswith("."):
+            fileType = f".{fileType}"
+        query = query.filter(FileModel.file_extension.ilike(fileType))
+
+    # Base list
+    files = query.all()
+
+    # Sensitivity rank mapping for custom sorting
+    sensitivity_order = {"Confidential": 4, "Restricted": 3, "Internal Only": 2, "Public": 1}
+
+    # Sorting
+    reverse = (sortOrder.lower() == "desc")
+    if sortBy == "name":
+        # Folders first, then by name
+        files = sorted(files, key=lambda x: (not x.is_folder, x.name.lower()), reverse=reverse)
+    elif sortBy == "date":
+        files = sorted(files, key=lambda x: (not x.is_folder, x.updated_at), reverse=reverse)
+    elif sortBy == "size":
+        files = sorted(files, key=lambda x: (not x.is_folder, x.size_bytes), reverse=reverse)
+    elif sortBy == "sensitivity":
+        files = sorted(files, key=lambda x: (not x.is_folder, sensitivity_order.get(x.sensitivity, 0)), reverse=reverse)
+
+    return [format_file_response(f) for f in files]
+
+@router.get("/tree", response_model=List[TreeNode])
+def get_file_tree(db: Session = Depends(get_db)):
+    """Returns the recursive hierarchical directory tree."""
+    return build_tree(db, parent_id=None)
+
+@router.get("/{file_id}", response_model=VDRFileResponse)
+def get_file(file_id: str, db: Session = Depends(get_db)):
+    file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
+    if not file_record:
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    # Auto-log 'Viewed' activity if file (not folder)
+    if not file_record.is_folder:
+        log_activity(
+            db=db,
+            file_id=file_record.id,
+            file_name=file_record.name,
+            action="Viewed",
+            details=f"Viewed file '{file_record.name}' in previewer"
+        )
+
+    return format_file_response(file_record)
+
+@router.post("/upload", response_model=VDRFileResponse)
+async def upload_file(
+    file: UploadFile = File(...),
+    parentId: Optional[str] = Form(None),
+    sensitivity: SensitivityLevel = Form("Internal Only"),
+    actorName: Optional[str] = Form("Elena Rostova"),
+    actorRole: Optional[str] = Form("Compliance Officer"),
+    db: Session = Depends(get_db)
+):
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Filename cannot be empty")
+
+    contents = await file.read()
+    if len(contents) > 50 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File size exceeds 50MB limit")
+
+    file_id = f"file-{uuid.uuid4().hex[:8]}"
+    now = get_utc_now()
+    _, ext = os.path.splitext(file.filename)
+    
+    # Resolve parent ID
+    actual_parent_id = None if (parentId in (None, "", "null", "root")) else parentId
+    if actual_parent_id:
+        parent_folder = db.query(FileModel).filter(FileModel.id == actual_parent_id, FileModel.is_folder == True).first()
+        if not parent_folder:
+            raise HTTPException(status_code=404, detail="Target parent folder not found")
+
+    # Ingest binary to MinIO
+    object_key = f"{file_id}-{file.filename}"
+    minio_service.upload_file(
+        object_name=object_key,
+        data=contents,
+        content_type=file.content_type or "application/octet-stream"
+    )
+
+    # Extract previewable text
+    content_preview = None
+    if ext.lower() in [".txt", ".md", ".json", ".csv"]:
+        try:
+            content_preview = contents.decode("utf-8", errors="replace")[:50000]
+        except Exception:
+            content_preview = None
+
+    new_file = FileModel(
+        id=file_id,
+        name=file.filename,
+        parent_id=actual_parent_id,
+        is_folder=False,
+        size_bytes=len(contents),
+        mime_type=file.content_type or "application/octet-stream",
+        file_extension=ext,
+        sensitivity=sensitivity,
+        storage_key=object_key,
+        content_preview=content_preview,
+        created_at=now,
+        updated_at=now
+    )
+    db.add(new_file)
+
+    # Default Permissions
+    perms = [
+        PermissionModel(id=f"perm-{uuid.uuid4().hex[:8]}", file_id=file_id, role="Admin", can_view=True, can_edit=True, can_share=True),
+        PermissionModel(id=f"perm-{uuid.uuid4().hex[:8]}", file_id=file_id, role="Compliance Officer", can_view=True, can_edit=True, can_share=True),
+        PermissionModel(id=f"perm-{uuid.uuid4().hex[:8]}", file_id=file_id, role="Advisor", can_view=True, can_edit=False, can_share=False),
+        PermissionModel(id=f"perm-{uuid.uuid4().hex[:8]}", file_id=file_id, role="Auditor", can_view=True, can_edit=False, can_share=False),
+    ]
+    db.add_all(perms)
+    db.commit()
+    db.refresh(new_file)
+
+    # Auto-log 'Uploaded' event
+    log_activity(
+        db=db,
+        file_id=new_file.id,
+        file_name=new_file.name,
+        action="Uploaded",
+        details=f"Uploaded {new_file.name} ({len(contents)} bytes, {sensitivity})",
+        actor_name=actorName or "Elena Rostova",
+        actor_role=actorRole or "Compliance Officer" # type: ignore
+    )
+
+    return format_file_response(new_file)
+
+@router.get("/{file_id}/content")
+def get_file_content(file_id: str, db: Session = Depends(get_db)):
+    """Streams file content directly or returns raw text."""
+    file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
+    if not file_record:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    if file_record.storage_key:
+        stream = minio_service.get_file_stream(file_record.storage_key)
+        if stream:
+            return StreamingResponse(
+                stream,
+                media_type=file_record.mime_type,
+                headers={"Content-Disposition": f'inline; filename="{file_record.name}"'}
+            )
+
+    if file_record.content_preview:
+        return Response(
+            content=file_record.content_preview,
+            media_type=file_record.mime_type
+        )
+
+    raise HTTPException(status_code=404, detail="Document content unavailable")
+
+@router.get("/{file_id}/download-url")
+def get_download_url(file_id: str, db: Session = Depends(get_db)):
+    """Generates presigned download URL."""
+    file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
+    if not file_record:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    url = minio_service.get_presigned_url(file_record.storage_key or file_record.id)
+    
+    # Auto-log 'Downloaded' event
+    log_activity(
+        db=db,
+        file_id=file_record.id,
+        file_name=file_record.name,
+        action="Downloaded",
+        details=f"Generated download access for '{file_record.name}'"
+    )
+
+    return {"downloadUrl": url, "fileName": file_record.name, "sizeBytes": file_record.size_bytes}
+
+@router.patch("/{file_id}", response_model=VDRFileResponse)
+def update_file(file_id: str, updates: VDRFileUpdate, db: Session = Depends(get_db)):
+    file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
+    if not file_record:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    old_name = file_record.name
+    old_sens = file_record.sensitivity
+
+    if updates.name is not None and updates.name.strip():
+        file_record.name = updates.name.strip()
+        _, ext = os.path.splitext(file_record.name)
+        file_record.file_extension = ext
+        log_activity(
+            db=db,
+            file_id=file_record.id,
+            file_name=file_record.name,
+            action="Renamed",
+            details=f"Renamed from '{old_name}' to '{file_record.name}'"
+        )
+
+    if updates.sensitivity is not None and updates.sensitivity != old_sens:
+        file_record.sensitivity = updates.sensitivity
+        log_activity(
+            db=db,
+            file_id=file_record.id,
+            file_name=file_record.name,
+            action="Permission Changed",
+            details=f"Changed sensitivity level from '{old_sens}' to '{updates.sensitivity}'"
+        )
+
+    file_record.updated_at = get_utc_now()
+    db.commit()
+    db.refresh(file_record)
+    return format_file_response(file_record)
+
+@router.delete("/{file_id}")
+def delete_file(file_id: str, db: Session = Depends(get_db)):
+    file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
+    if not file_record:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    file_name = file_record.name
+    deleted_ids = delete_cascade(db, file_id)
+    db.commit()
+
+    log_activity(
+        db=db,
+        file_id=file_id,
+        file_name=file_name,
+        action="Deleted",
+        details=f"Deleted '{file_name}' and {len(deleted_ids) - 1} nested sub-items"
+    )
+
+    return {"success": True, "deletedCount": len(deleted_ids), "deletedIds": deleted_ids}
+
+@router.post("/batch-delete", response_model=BatchOperationResponse)
+def batch_delete(payload: BatchDeleteRequest, db: Session = Depends(get_db)):
+    all_deleted = []
+    for fid in payload.fileIds:
+        deleted = delete_cascade(db, fid)
+        all_deleted.extend(deleted)
+    
+    db.commit()
+    return BatchOperationResponse(
+        success=True,
+        affectedCount=len(all_deleted),
+        affectedIds=all_deleted,
+        message=f"Successfully deleted {len(all_deleted)} item(s)."
+    )
+
+@router.post("/batch-tag", response_model=BatchOperationResponse)
+def batch_tag(payload: BatchTagRequest, db: Session = Depends(get_db)):
+    files = db.query(FileModel).filter(FileModel.id.in_(payload.fileIds)).all()
+    for f in files:
+        f.sensitivity = payload.sensitivity
+        f.updated_at = get_utc_now()
+        log_activity(
+            db=db,
+            file_id=f.id,
+            file_name=f.name,
+            action="Permission Changed",
+            details=f"Bulk updated sensitivity tag to '{payload.sensitivity}'"
+        )
+    
+    db.commit()
+    return BatchOperationResponse(
+        success=True,
+        affectedCount=len(files),
+        affectedIds=[f.id for f in files],
+        message=f"Updated sensitivity to '{payload.sensitivity}' for {len(files)} item(s)."
+    )
