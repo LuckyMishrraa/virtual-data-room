@@ -26,7 +26,6 @@ def get_audit_logs(
     if action:
         query = query.filter(AuditLogModel.action == action)
 
-    # Order newest first
     logs = query.order_by(AuditLogModel.timestamp.desc()).offset(skip).limit(limit).all()
 
     return [
@@ -49,7 +48,7 @@ def get_audit_logs(
 
 @router.post("", response_model=AuditLogResponse)
 def record_audit_log(payload: AuditLogCreate, db: Session = Depends(get_db)):
-    """Allows recording client-side interactions (e.g. preview opened, filter applied)."""
+    """Allows recording client-side interactions."""
     entry = log_activity(
         db=db,
         file_id=payload.fileId,

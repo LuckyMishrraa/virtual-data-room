@@ -1,0 +1,97 @@
+services:
+  # ==========================================================
+  # Next.js 15 Frontend Application
+  # ==========================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vdr-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    depends_on:
+      - backend
+    networks:
+      - vdr-network
+
+  # ==========================================================
+  # FastAPI Backend API Service
+  # ==========================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vdr-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - DATABASE_URL=sqlite:///./vdr.db
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_PUBLIC_ENDPOINT=localhost:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_BUCKET_NAME=vdr-documents
+      - MINIO_SECURE=False
+    volumes:
+      - backend_data:/app/data
+    depends_on:
+      - minio
+    networks:
+      - vdr-network
+
+  # ==========================================================
+  # MinIO Object Storage (S3-Compatible)
+  # ==========================================================
+  minio:
+    image: minio/minio:latest
+    container_name: vdr-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # Web Console UI
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - vdr-network
+
+  # ==========================================================
+  # MinIO Bucket Auto-Provisioner (One-shot initialization)
+  # ==========================================================
+  minio-init:
+    image: minio/mc:latest
+    container_name: vdr-minio-init
+    depends_on:
+      - minio
+    networks:
+      - vdr-network
+    entrypoint: >
+      /bin/sh -c "
+      until (/usr/bin/mc alias set localminio http://minio:9000 minioadmin minioadmin); do
+        echo 'Waiting for MinIO storage service...';
+        sleep 2;
+      done;
+      /usr/bin/mc mb localminio/vdr-documents --ignore-existing;
+      /usr/bin/mc anonymous set download localminio/vdr-documents;
+      echo 'MinIO vdr-documents bucket ready!';
+      exit 0;
+      "
+
+networks:
+  vdr-network:
+    driver: bridge
+
+volumes:
+  minio_data:
+    driver: local
+  backend_data:
+    driver: local

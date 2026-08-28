@@ -16,16 +16,14 @@ def create_folder(payload: FolderCreate, db: Session = Depends(get_db)):
     if not payload.name or not payload.name.strip():
         raise HTTPException(status_code=400, detail="Folder name cannot be empty")
 
-    folder_name = payload.name.strip()
     actual_parent_id = None if payload.parentId in (None, "", "null", "root") else payload.parentId
+    folder_name = payload.name.strip()
 
-    # Verify parent folder exists if specified
     if actual_parent_id:
         parent = db.query(FileModel).filter(FileModel.id == actual_parent_id, FileModel.is_folder == True).first()
         if not parent:
             raise HTTPException(status_code=404, detail="Parent folder not found")
 
-    # Check for duplicate folder name in same directory
     existing = db.query(FileModel).filter(
         FileModel.parent_id == actual_parent_id,
         FileModel.is_folder == True,
@@ -51,7 +49,6 @@ def create_folder(payload: FolderCreate, db: Session = Depends(get_db)):
     )
     db.add(folder)
 
-    # Default permissions
     perms = [
         PermissionModel(id=f"perm-{uuid.uuid4().hex[:8]}", file_id=folder_id, role="Admin", can_view=True, can_edit=True, can_share=True),
         PermissionModel(id=f"perm-{uuid.uuid4().hex[:8]}", file_id=folder_id, role="Compliance Officer", can_view=True, can_edit=True, can_share=True),

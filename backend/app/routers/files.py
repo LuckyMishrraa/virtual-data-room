@@ -1,10 +1,10 @@
 import uuid
 import os
-from app.config import get_utc_now
 from typing import List, Optional
 from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Query
 from fastapi.responses import StreamingResponse, Response
 from sqlalchemy.orm import Session
+from app.config import get_utc_now
 from app.database import get_db
 from app.models.db_models import FileModel, PermissionModel
 from app.models.schemas import (
@@ -29,12 +29,14 @@ def list_files(
 ):
     query = db.query(FileModel)
 
+    actual_parent_id = None if (parentId in (None, "", "null", "root")) else parentId
+
     if search:
         query = query.filter(FileModel.name.ilike(f"%{search}%"))
-    elif parentId == "root" or parentId is None:
+    elif actual_parent_id is None:
         query = query.filter(FileModel.parent_id == None)
     else:
-        query = query.filter(FileModel.parent_id == parentId)
+        query = query.filter(FileModel.parent_id == actual_parent_id)
 
     if sensitivity:
         query = query.filter(FileModel.sensitivity == sensitivity)
@@ -44,16 +46,11 @@ def list_files(
             fileType = f".{fileType}"
         query = query.filter(FileModel.file_extension.ilike(fileType))
 
-    # Base list
     files = query.all()
 
-    # Sensitivity rank mapping for custom sorting
     sensitivity_order = {"Confidential": 4, "Restricted": 3, "Internal Only": 2, "Public": 1}
-
-    # Sorting
     reverse = (sortOrder.lower() == "desc")
     if sortBy == "name":
-        # Folders first, then by name
         files = sorted(files, key=lambda x: (not x.is_folder, x.name.lower()), reverse=reverse)
     elif sortBy == "date":
         files = sorted(files, key=lambda x: (not x.is_folder, x.updated_at), reverse=reverse)
@@ -75,7 +72,6 @@ def get_file(file_id: str, db: Session = Depends(get_db)):
     if not file_record:
         raise HTTPException(status_code=404, detail="File not found")
     
-    # Auto-log 'Viewed' activity if file (not folder)
     if not file_record.is_folder:
         log_activity(
             db=db,
@@ -92,29 +88,19 @@ async def upload_file(
     file: UploadFile = File(...),
     parentId: Optional[str] = Form(None),
     sensitivity: SensitivityLevel = Form("Internal Only"),
-    actorName: Optional[str] = Form("Elena Rostova"),
-    actorRole: Optional[str] = Form("Compliance Officer"),
+    actorName: Optional[str] = Form(None),
+    actorRole: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename cannot be empty")
 
-    contents = await file.read()
-    if len(contents) > 50 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="File size exceeds 50MB limit")
-
+    actual_parent_id = None if (parentId in (None, "", "null", "root")) else parentId
     file_id = f"file-{uuid.uuid4().hex[:8]}"
     now = get_utc_now()
     _, ext = os.path.splitext(file.filename)
-    
-    # Resolve parent ID
-    actual_parent_id = None if (parentId in (None, "", "null", "root")) else parentId
-    if actual_parent_id:
-        parent_folder = db.query(FileModel).filter(FileModel.id == actual_parent_id, FileModel.is_folder == True).first()
-        if not parent_folder:
-            raise HTTPException(status_code=404, detail="Target parent folder not found")
 
-    # Ingest binary to MinIO
+    contents = await file.read()
     object_key = f"{file_id}-{file.filename}"
     minio_service.upload_file(
         object_name=object_key,
@@ -122,7 +108,6 @@ async def upload_file(
         content_type=file.content_type or "application/octet-stream"
     )
 
-    # Extract previewable text
     content_preview = None
     if ext.lower() in [".txt", ".md", ".json", ".csv"]:
         try:
@@ -146,7 +131,6 @@ async def upload_file(
     )
     db.add(new_file)
 
-    # Default Permissions
     perms = [
         PermissionModel(id=f"perm-{uuid.uuid4().hex[:8]}", file_id=file_id, role="Admin", can_view=True, can_edit=True, can_share=True),
         PermissionModel(id=f"perm-{uuid.uuid4().hex[:8]}", file_id=file_id, role="Compliance Officer", can_view=True, can_edit=True, can_share=True),
@@ -157,15 +141,14 @@ async def upload_file(
     db.commit()
     db.refresh(new_file)
 
-    # Auto-log 'Uploaded' event
     log_activity(
         db=db,
         file_id=new_file.id,
         file_name=new_file.name,
         action="Uploaded",
         details=f"Uploaded {new_file.name} ({len(contents)} bytes, {sensitivity})",
-        actor_name=actorName or "Elena Rostova",
-        actor_role=actorRole or "Compliance Officer" # type: ignore
+        actor_name=actorName,
+        actor_role=actorRole # type: ignore
     )
 
     return format_file_response(new_file)
@@ -203,7 +186,6 @@ def get_download_url(file_id: str, db: Session = Depends(get_db)):
 
     url = minio_service.get_presigned_url(file_record.storage_key or file_record.id)
     
-    # Auto-log 'Downloaded' event
     log_activity(
         db=db,
         file_id=file_record.id,
@@ -215,7 +197,13 @@ def get_download_url(file_id: str, db: Session = Depends(get_db)):
     return {"downloadUrl": url, "fileName": file_record.name, "sizeBytes": file_record.size_bytes}
 
 @router.patch("/{file_id}", response_model=VDRFileResponse)
-def update_file(file_id: str, updates: VDRFileUpdate, db: Session = Depends(get_db)):
+def update_file(
+    file_id: str,
+    updates: VDRFileUpdate,
+    actorName: Optional[str] = Query(None),
+    actorRole: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
     file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
     if not file_record:
         raise HTTPException(status_code=404, detail="File not found")
@@ -232,7 +220,9 @@ def update_file(file_id: str, updates: VDRFileUpdate, db: Session = Depends(get_
             file_id=file_record.id,
             file_name=file_record.name,
             action="Renamed",
-            details=f"Renamed from '{old_name}' to '{file_record.name}'"
+            details=f"Renamed from '{old_name}' to '{file_record.name}'",
+            actor_name=actorName,
+            actor_role=actorRole # type: ignore
         )
 
     if updates.sensitivity is not None and updates.sensitivity != old_sens:
@@ -242,7 +232,9 @@ def update_file(file_id: str, updates: VDRFileUpdate, db: Session = Depends(get_
             file_id=file_record.id,
             file_name=file_record.name,
             action="Permission Changed",
-            details=f"Changed sensitivity level from '{old_sens}' to '{updates.sensitivity}'"
+            details=f"Changed sensitivity level from '{old_sens}' to '{updates.sensitivity}'",
+            actor_name=actorName,
+            actor_role=actorRole # type: ignore
         )
 
     file_record.updated_at = get_utc_now()
@@ -251,7 +243,12 @@ def update_file(file_id: str, updates: VDRFileUpdate, db: Session = Depends(get_
     return format_file_response(file_record)
 
 @router.delete("/{file_id}")
-def delete_file(file_id: str, db: Session = Depends(get_db)):
+def delete_file(
+    file_id: str,
+    actorName: Optional[str] = Query(None),
+    actorRole: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
     file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
     if not file_record:
         raise HTTPException(status_code=404, detail="File not found")
@@ -265,7 +262,9 @@ def delete_file(file_id: str, db: Session = Depends(get_db)):
         file_id=file_id,
         file_name=file_name,
         action="Deleted",
-        details=f"Deleted '{file_name}' and {len(deleted_ids) - 1} nested sub-items"
+        details=f"Deleted '{file_name}' and {len(deleted_ids) - 1} nested sub-items",
+        actor_name=actorName,
+        actor_role=actorRole # type: ignore
     )
 
     return {"success": True, "deletedCount": len(deleted_ids), "deletedIds": deleted_ids}
@@ -286,7 +285,12 @@ def batch_delete(payload: BatchDeleteRequest, db: Session = Depends(get_db)):
     )
 
 @router.post("/batch-tag", response_model=BatchOperationResponse)
-def batch_tag(payload: BatchTagRequest, db: Session = Depends(get_db)):
+def batch_tag(
+    payload: BatchTagRequest,
+    actorName: Optional[str] = Query(None),
+    actorRole: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
     files = db.query(FileModel).filter(FileModel.id.in_(payload.fileIds)).all()
     for f in files:
         f.sensitivity = payload.sensitivity
@@ -296,7 +300,9 @@ def batch_tag(payload: BatchTagRequest, db: Session = Depends(get_db)):
             file_id=f.id,
             file_name=f.name,
             action="Permission Changed",
-            details=f"Bulk updated sensitivity tag to '{payload.sensitivity}'"
+            details=f"Bulk updated sensitivity tag to '{payload.sensitivity}'",
+            actor_name=actorName,
+            actor_role=actorRole # type: ignore
         )
     
     db.commit()

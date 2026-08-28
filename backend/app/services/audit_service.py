@@ -11,10 +11,10 @@ def log_activity(
     file_name: str,
     action: ActionType,
     details: str,
-    actor_id: str = "usr-comp-02",
-    actor_name: str = "Elena Rostova",
-    actor_role: UserRole = "Compliance Officer",
-    actor_avatar_url: Optional[str] = "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80"
+    actor_id: Optional[str] = None,
+    actor_name: Optional[str] = None,
+    actor_role: Optional[UserRole] = None,
+    actor_avatar_url: Optional[str] = None
 ) -> AuditLogModel:
     """Standardized helper to record an immutable audit log entry in the database."""
     log_entry = AuditLogModel(
@@ -22,10 +22,10 @@ def log_activity(
         file_id=file_id,
         file_name=file_name,
         action=action,
-        actor_id=actor_id,
-        actor_name=actor_name,
-        actor_role=actor_role,
-        actor_avatar_url=actor_avatar_url,
+        actor_id=actor_id or "usr-comp-02",
+        actor_name=actor_name or "Elena Rostova",
+        actor_role=actor_role or "Compliance Officer",
+        actor_avatar_url=actor_avatar_url or "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80",
         details=details,
         timestamp=get_utc_now()
     )

@@ -12,11 +12,10 @@ logger = logging.getLogger("vdr-backend")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup Lifespan: DB initialization & MinIO bucket check
     logger.info("Initializing Virtual Data Room services...")
     try:
         init_db()
-        logger.info("Database schema and initial seed data ready.")
+        logger.info("Database schema and RBAC personas ready.")
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
 
@@ -31,7 +30,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="High-performance Virtual Data Room (VDR) Backend API with MinIO Object Storage, RBAC, and Compliance Auditing.",
+    description="Institutional-grade Virtual Data Room (VDR) Backend API with MinIO S3 Object Storage, RBAC Permission Matrix, Zero-Download Previews, and Immutable Audit Logging.",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -47,7 +46,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register All Routers under /api/v1
+# Register All API Routers under /api/v1
 app.include_router(files.router, prefix=settings.API_V1_STR)
 app.include_router(folders.router, prefix=settings.API_V1_STR)
 app.include_router(permissions.router, prefix=settings.API_V1_STR)
