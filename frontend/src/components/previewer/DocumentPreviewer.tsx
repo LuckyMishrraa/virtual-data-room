@@ -20,6 +20,7 @@ import {
   CheckCircle2,
   Image as ImageIcon,
   FileCode,
+  GripVertical,
 } from "lucide-react";
 import { vdrApi } from "@/lib/api/vdrApi";
 
@@ -27,6 +28,8 @@ type PreviewTab = "content" | "flags" | "permissions" | "history";
 
 const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp"];
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+const MIN_PANEL_WIDTH = 380;
+const DEFAULT_PANEL_WIDTH = 580;
 
 export const DocumentPreviewer: React.FC = () => {
   const {
@@ -47,6 +50,67 @@ export const DocumentPreviewer: React.FC = () => {
   const [newFlagReason, setNewFlagReason] = useState("");
   const [fetchedTextContent, setFetchedTextContent] = useState<string | null>(null);
   const [isLoadingText, setIsLoadingText] = useState(false);
+
+  // Resizable split-pane slider state
+  const [width, setWidth] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("vdr_preview_width");
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= MIN_PANEL_WIDTH) {
+          return Math.min(parsed, Math.round(window.innerWidth * 0.85));
+        }
+      }
+    }
+    return DEFAULT_PANEL_WIDTH;
+  });
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Mouse / pointer drag listener for smooth slider resizing
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handlePointerMove = (e: PointerEvent | MouseEvent) => {
+      const maxWidth = Math.min(window.innerWidth * 0.85, 1400);
+      const newWidth = Math.max(MIN_PANEL_WIDTH, Math.min(window.innerWidth - e.clientX, maxWidth));
+      setWidth(newWidth);
+    };
+
+    const handlePointerUp = () => {
+      setIsDragging(false);
+      try {
+        localStorage.setItem("vdr_preview_width", width.toString());
+      } catch {}
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [isDragging, width]);
+
+  // Double-click snap presets: 35% compact -> 50% split -> 80% focus -> compact
+  const handleSnapWidth = () => {
+    if (typeof window === "undefined") return;
+    const currentRatio = width / window.innerWidth;
+    let nextWidth = DEFAULT_PANEL_WIDTH;
+
+    if (currentRatio < 0.4) {
+      nextWidth = Math.round(window.innerWidth * 0.5);
+    } else if (currentRatio < 0.65) {
+      nextWidth = Math.round(Math.min(window.innerWidth * 0.8, 1400));
+    } else {
+      nextWidth = MIN_PANEL_WIDTH;
+    }
+
+    setWidth(nextWidth);
+    try {
+      localStorage.setItem("vdr_preview_width", nextWidth.toString());
+    } catch {}
+  };
 
   const isAuditor = currentUser.role === "Auditor";
   const ext = selectedFile?.fileExtension?.toLowerCase() || "";
@@ -110,7 +174,48 @@ export const DocumentPreviewer: React.FC = () => {
   };
 
   return (
-    <div className="w-full lg:w-[520px] xl:w-[620px] h-[calc(100vh-4rem)] border-l border-border bg-surface flex flex-col shrink-0 shadow-2xl z-20 transition-all duration-300">
+    <div
+      style={{ width: `${width}px` }}
+      className={cn(
+        "relative h-[calc(100vh-4rem)] border-l border-border bg-surface flex flex-col shrink-0 shadow-2xl z-20",
+        isDragging ? "transition-none select-none" : "transition-[width] duration-150 ease-out"
+      )}
+    >
+      {/* Resizable Left Edge Slider Handle */}
+      <div
+        onPointerDown={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDoubleClick={handleSnapWidth}
+        className="absolute -left-2 top-0 bottom-0 w-4 cursor-col-resize z-30 group flex items-center justify-center select-none"
+        title="Drag to resize panel (Double-click to cycle presets: 35% / 50% / 80%)"
+      >
+        {/* Visual Grip Bar */}
+        <div
+          className={cn(
+            "w-1 h-12 rounded-full transition-all duration-150 flex items-center justify-center",
+            isDragging
+              ? "bg-blue-500 w-1.5 h-16 shadow-[0_0_12px_rgba(59,130,246,0.6)]"
+              : "bg-border/80 group-hover:bg-blue-400 group-hover:h-14"
+          )}
+        >
+          <GripVertical
+            className={cn(
+              "w-3 h-3 transition-opacity",
+              isDragging
+                ? "opacity-100 text-white"
+                : "opacity-0 group-hover:opacity-100 text-text-secondary"
+            )}
+          />
+        </div>
+      </div>
+
+      {/* Fullscreen transparent shield during dragging to prevent iframe/PDF event interception */}
+      {isDragging && (
+        <div className="fixed inset-0 z-50 cursor-col-resize select-none pointer-events-auto" />
+      )}
+
       {/* Top Header */}
       <div className="p-4 border-b border-border bg-surface-raised/40 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
