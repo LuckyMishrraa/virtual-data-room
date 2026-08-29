@@ -1,0 +1,14 @@
+{
+  "name": "acumen-virtual-data-room",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Acumen Virtual Data Room (VDR) & Compliance Platform",
+  "scripts": {
+    "dev": "docker compose up",
+    "build": "docker compose build",
+    "down": "docker compose down",
+    "test": "docker compose run --rm backend pytest tests/ -v",
+    "test:static": "./run_static_tests.sh",
+    "test:static:docker": "docker compose run --rm backend ruff check app/ tests/ && docker compose run --rm frontend npm run test:static"
+  }
+}

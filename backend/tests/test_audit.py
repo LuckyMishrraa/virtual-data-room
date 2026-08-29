@@ -1,5 +1,5 @@
 import io
-import pytest
+
 
 def test_audit_logs_list_and_auto_capture(client):
     # Perform upload action
@@ -20,7 +20,7 @@ def test_audit_logs_list_and_auto_capture(client):
     logs = response.json()
     assert len(logs) >= 2
 
-    actions = [l["action"] for l in logs]
+    actions = [log["action"] for log in logs]
     assert "Uploaded" in actions
     assert "Renamed" in actions
 
@@ -31,7 +31,7 @@ def test_filter_audit_logs_by_file(client):
     response = client.get("/api/v1/audit-logs?fileId=test-file-1")
     assert response.status_code == 200
     logs = response.json()
-    assert all(l["fileId"] == "test-file-1" for l in logs)
+    assert all(log["fileId"] == "test-file-1" for log in logs)
 
 def test_record_manual_audit_log(client):
     payload = {

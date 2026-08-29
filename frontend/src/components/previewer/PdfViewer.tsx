@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import {
   ExternalLink,
-  Download,
   Maximize2,
   Minimize2,
   FileText,
@@ -27,10 +26,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   const pdfUrl = `http://localhost:8000/api/v1/files/${fileId}/content`;
 
   const handleOpenExternal = () => {
-    window.open(pdfUrl, "_blank");
-  };
-
-  const handleDownload = () => {
     window.open(pdfUrl, "_blank");
   };
 
@@ -64,14 +59,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
           </button>
 
           <button
-            onClick={handleDownload}
-            className="p-1.5 rounded-lg border border-border bg-surface hover:bg-surface-raised text-emerald-500 transition-colors"
-            title="Download PDF"
-          >
-            <Download className="w-4 h-4" />
-          </button>
-
-          <button
             onClick={() => setIsFullscreen(!isFullscreen)}
             className="p-1.5 rounded-lg border border-border bg-surface hover:bg-surface-raised text-text-secondary transition-colors"
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
@@ -100,11 +87,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                 Your browser is unable to render embedded PDF inline.
               </p>
               <button
-                onClick={handleDownload}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-md"
+                onClick={handleOpenExternal}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md"
               >
-                <Download className="w-4 h-4" />
-                <span>Download & View PDF</span>
+                <ExternalLink className="w-4 h-4" />
+                <span>Open in Tab</span>
               </button>
             </div>
           </iframe>

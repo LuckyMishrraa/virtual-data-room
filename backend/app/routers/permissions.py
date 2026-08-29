@@ -1,16 +1,17 @@
-from typing import Dict
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from app.config import get_utc_now
 from app.database import get_db
 from app.models.db_models import FileModel, PermissionModel
-from app.models.schemas import PermissionsUpdate, VDRFileResponse, RolePermissions, UserRole
-from app.services.file_service import format_file_response
+from app.models.schemas import PermissionsUpdate, RolePermissions, UserRole, VDRFileResponse
 from app.services.audit_service import log_activity
+from app.services.file_service import format_file_response
 
 router = APIRouter(prefix="/files", tags=["Permissions"])
 
-@router.get("/{file_id}/permissions", response_model=Dict[UserRole, RolePermissions])
+@router.get("/{file_id}/permissions", response_model=dict[UserRole, RolePermissions])
 def get_file_permissions(file_id: str, db: Session = Depends(get_db)):
     file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
     if not file_record:

@@ -1,4 +1,3 @@
-import pytest
 
 def test_create_folder_root(client):
     response = client.post(

@@ -48,9 +48,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
 
   return (
     <div
-      className={`relative flex flex-col rounded-xl border border-border bg-surface-raised/40 overflow-hidden ${
-        isFullscreen ? "fixed inset-0 z-50 bg-black/95 rounded-none border-none p-4" : "h-[540px]"
-      }`}
+      className={`relative flex flex-col rounded-xl border border-border bg-surface-raised/40 overflow-hidden ${isFullscreen ? "fixed inset-0 z-50 bg-black/95 rounded-none border-none p-4" : "h-[540px]"
+        }`}
     >
       {/* Viewer Toolbar */}
       <div className="flex items-center justify-between p-2.5 bg-surface/90 backdrop-blur-md border-b border-border text-xs z-10">
@@ -156,9 +155,8 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
                 setIsLoading(false);
                 setHasError(true);
               }}
-              className={`max-w-full max-h-[460px] object-contain rounded-lg shadow-2xl transition-opacity duration-200 ${
-                isLoading ? "opacity-0" : "opacity-100"
-              }`}
+              className={`max-w-full max-h-[460px] object-contain rounded-lg shadow-2xl transition-opacity duration-200 ${isLoading ? "opacity-0" : "opacity-100"
+                }`}
             />
           </div>
         )}

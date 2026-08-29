@@ -1,15 +1,21 @@
-from typing import List, Optional, Dict
+
 from sqlalchemy.orm import Session
-from app.models.db_models import FileModel, PermissionModel, ComplianceFlagModel
+
+from app.models.db_models import FileModel
 from app.models.schemas import (
-    VDRFileResponse, ComplianceFlagResponse, BreadcrumbItem,
-    TreeNode, RolePermissions, UserRole
+    BreadcrumbItem,
+    ComplianceFlagResponse,
+    RolePermissions,
+    TreeNode,
+    UserRole,
+    VDRFileResponse,
 )
 from app.services.minio_service import minio_service
 
+
 def format_file_response(file: FileModel) -> VDRFileResponse:
     """Formats SQLAlchemy FileModel into VDRFileResponse with parsed permissions dict and compliance flags."""
-    perm_dict: Dict[UserRole, RolePermissions] = {
+    perm_dict: dict[UserRole, RolePermissions] = {
         "Admin": RolePermissions(canView=True, canEdit=True, canShare=True),
         "Compliance Officer": RolePermissions(canView=True, canEdit=True, canShare=True),
         "Advisor": RolePermissions(canView=True, canEdit=False, canShare=False),
@@ -52,15 +58,15 @@ def format_file_response(file: FileModel) -> VDRFileResponse:
         contentPreview=file.content_preview
     )
 
-def get_breadcrumbs(db: Session, folder_id: Optional[str]) -> List[BreadcrumbItem]:
+def get_breadcrumbs(db: Session, folder_id: str | None) -> list[BreadcrumbItem]:
     """Builds an ordered breadcrumb trail from Root down to the specified folder."""
-    crumbs: List[BreadcrumbItem] = [BreadcrumbItem(id=None, name="Home", isRoot=True)]
+    crumbs: list[BreadcrumbItem] = [BreadcrumbItem(id=None, name="Home", isRoot=True)]
     if not folder_id:
         return crumbs
 
     current_id = folder_id
-    trail: List[BreadcrumbItem] = []
-    
+    trail: list[BreadcrumbItem] = []
+
     # Traverse upwards
     visited = set()
     while current_id and current_id not in visited:
@@ -74,10 +80,10 @@ def get_breadcrumbs(db: Session, folder_id: Optional[str]) -> List[BreadcrumbIte
     trail.reverse()
     return crumbs + trail
 
-def build_tree(db: Session, parent_id: Optional[str] = None) -> List[TreeNode]:
+def build_tree(db: Session, parent_id: str | None = None) -> list[TreeNode]:
     """Recursively builds tree nodes for directory tree sidebar."""
     items = db.query(FileModel).filter(FileModel.parent_id == parent_id).order_by(FileModel.is_folder.desc(), FileModel.name.asc()).all()
-    tree: List[TreeNode] = []
+    tree: list[TreeNode] = []
 
     for item in items:
         node = TreeNode(
@@ -92,7 +98,7 @@ def build_tree(db: Session, parent_id: Optional[str] = None) -> List[TreeNode]:
 
     return tree
 
-def delete_cascade(db: Session, file_id: str) -> List[str]:
+def delete_cascade(db: Session, file_id: str) -> list[str]:
     """Deletes a file or folder along with all nested children and MinIO assets."""
     deleted_ids = []
     item = db.query(FileModel).filter(FileModel.id == file_id).first()

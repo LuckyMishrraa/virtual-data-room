@@ -1,13 +1,16 @@
 import uuid
 from datetime import datetime
-from typing import List, Optional, Dict
+
 from app.models.schemas import (
-    VDRFileResponse, RolePermissions, ComplianceFlag,
-    AuditLogResponse, SensitivityLevel, UserRole
+    AuditLogResponse,
+    ComplianceFlag,
+    RolePermissions,
+    UserRole,
+    VDRFileResponse,
 )
 
 # Default Role Matrix template
-DEFAULT_PERMISSIONS: Dict[UserRole, RolePermissions] = {
+DEFAULT_PERMISSIONS: dict[UserRole, RolePermissions] = {
     "Admin": RolePermissions(canView=True, canEdit=True, canShare=True),
     "Compliance Officer": RolePermissions(canView=True, canEdit=True, canShare=True),
     "Advisor": RolePermissions(canView=True, canEdit=False, canShare=False),
@@ -16,13 +19,13 @@ DEFAULT_PERMISSIONS: Dict[UserRole, RolePermissions] = {
 
 class InMemoryDatabase:
     def __init__(self):
-        self.files: Dict[str, VDRFileResponse] = {}
-        self.audit_logs: List[AuditLogResponse] = []
+        self.files: dict[str, VDRFileResponse] = {}
+        self.audit_logs: list[AuditLogResponse] = []
         self._seed_sample_data()
 
     def _seed_sample_data(self):
         now = datetime.utcnow().isoformat() + "Z"
-        
+
         # Sample Folders
         f_funds_id = "folder-funds-101"
         f_disclosures_id = "folder-disc-202"

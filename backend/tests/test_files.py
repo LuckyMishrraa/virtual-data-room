@@ -1,5 +1,5 @@
 import io
-import pytest
+
 
 def test_health_check(client):
     response = client.get("/health")
@@ -62,7 +62,7 @@ def test_get_file_detail(client):
 def test_upload_file(client):
     file_content = b"Mock Fund Disclosure Agreement\nSection 1: Assets"
     file_tuple = ("fund_agreement.txt", io.BytesIO(file_content), "text/plain")
-    
+
     response = client.post(
         "/api/v1/files/upload",
         files={"file": file_tuple},

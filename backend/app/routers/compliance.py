@@ -1,11 +1,12 @@
 import uuid
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from app.config import get_utc_now
 from app.database import get_db
-from app.models.db_models import FileModel, ComplianceFlagModel
+from app.models.db_models import ComplianceFlagModel, FileModel
 from app.models.schemas import ComplianceFlagCreate, ComplianceFlagResponse
-from app.services.file_service import format_file_response
 from app.services.audit_service import log_activity
 
 router = APIRouter(prefix="/files", tags=["Compliance"])

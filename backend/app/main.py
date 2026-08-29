@@ -1,11 +1,13 @@
 import logging
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.config import settings
 from app.database import init_db
+from app.routers import audit, compliance, files, folders, permissions, users
 from app.services.minio_service import minio_service
-from app.routers import files, folders, permissions, compliance, audit, users
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("vdr-backend")

@@ -1,4 +1,3 @@
-import pytest
 
 def test_get_users(client):
     response = client.get("/api/v1/users")

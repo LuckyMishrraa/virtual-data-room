@@ -1,30 +1,36 @@
-import uuid
 import os
-from typing import List, Optional
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Query
-from fastapi.responses import StreamingResponse, Response
+import uuid
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile
+from fastapi.responses import Response, StreamingResponse
 from sqlalchemy.orm import Session
+
 from app.config import get_utc_now
 from app.database import get_db
 from app.models.db_models import FileModel, PermissionModel
 from app.models.schemas import (
-    VDRFileResponse, VDRFileUpdate, SensitivityLevel, TreeNode,
-    BatchDeleteRequest, BatchTagRequest, BatchOperationResponse
+    BatchDeleteRequest,
+    BatchOperationResponse,
+    BatchTagRequest,
+    SensitivityLevel,
+    TreeNode,
+    VDRFileResponse,
+    VDRFileUpdate,
 )
-from app.services.minio_service import minio_service
-from app.services.file_service import format_file_response, build_tree, delete_cascade
 from app.services.audit_service import log_activity
+from app.services.file_service import build_tree, delete_cascade, format_file_response
+from app.services.minio_service import minio_service
 
 router = APIRouter(prefix="/files", tags=["Files"])
 
-@router.get("", response_model=List[VDRFileResponse])
+@router.get("", response_model=list[VDRFileResponse])
 def list_files(
-    parentId: Optional[str] = Query(None, description="Parent folder ID (omit or 'root' for top level)"),
-    search: Optional[str] = Query(None, description="Keyword search in file name"),
-    sensitivity: Optional[str] = Query(None, description="Filter by sensitivity tag"),
-    fileType: Optional[str] = Query(None, description="Filter by file extension e.g. .pdf"),
-    sortBy: Optional[str] = Query("name", description="Sort by: name, date, size, sensitivity"),
-    sortOrder: Optional[str] = Query("asc", description="Sort order: asc, desc"),
+    parentId: str | None = Query(None, description="Parent folder ID (omit or 'root' for top level)"),
+    search: str | None = Query(None, description="Keyword search in file name"),
+    sensitivity: str | None = Query(None, description="Filter by sensitivity tag"),
+    fileType: str | None = Query(None, description="Filter by file extension e.g. .pdf"),
+    sortBy: str | None = Query("name", description="Sort by: name, date, size, sensitivity"),
+    sortOrder: str | None = Query("asc", description="Sort order: asc, desc"),
     db: Session = Depends(get_db)
 ):
     query = db.query(FileModel)
@@ -34,7 +40,7 @@ def list_files(
     if search:
         query = query.filter(FileModel.name.ilike(f"%{search}%"))
     elif actual_parent_id is None:
-        query = query.filter(FileModel.parent_id == None)
+        query = query.filter(FileModel.parent_id.is_(None))
     else:
         query = query.filter(FileModel.parent_id == actual_parent_id)
 
@@ -61,7 +67,7 @@ def list_files(
 
     return [format_file_response(f) for f in files]
 
-@router.get("/tree", response_model=List[TreeNode])
+@router.get("/tree", response_model=list[TreeNode])
 def get_file_tree(db: Session = Depends(get_db)):
     """Returns the recursive hierarchical directory tree."""
     return build_tree(db, parent_id=None)
@@ -71,7 +77,7 @@ def get_file(file_id: str, db: Session = Depends(get_db)):
     file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
     if not file_record:
         raise HTTPException(status_code=404, detail="File not found")
-    
+
     if not file_record.is_folder:
         log_activity(
             db=db,
@@ -86,10 +92,10 @@ def get_file(file_id: str, db: Session = Depends(get_db)):
 @router.post("/upload", response_model=VDRFileResponse)
 async def upload_file(
     file: UploadFile = File(...),
-    parentId: Optional[str] = Form(None),
+    parentId: str | None = Form(None),
     sensitivity: SensitivityLevel = Form("Internal Only"),
-    actorName: Optional[str] = Form(None),
-    actorRole: Optional[str] = Form(None),
+    actorName: str | None = Form(None),
+    actorRole: str | None = Form(None),
     db: Session = Depends(get_db)
 ):
     if not file.filename:
@@ -154,38 +160,39 @@ async def upload_file(
     return format_file_response(new_file)
 
 @router.get("/{file_id}/content")
-def get_file_content(file_id: str, db: Session = Depends(get_db)):
+def get_file_content(file_id: str, download: bool = False, db: Session = Depends(get_db)):
     """Streams file content directly or returns raw text."""
     file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
     if not file_record:
         raise HTTPException(status_code=404, detail="File not found")
 
+    disposition = "attachment" if download else "inline"
     if file_record.storage_key:
         stream = minio_service.get_file_stream(file_record.storage_key)
         if stream:
             return StreamingResponse(
                 stream,
                 media_type=file_record.mime_type,
-                headers={"Content-Disposition": f'inline; filename="{file_record.name}"'}
+                headers={"Content-Disposition": f'{disposition}; filename="{file_record.name}"'}
             )
 
     if file_record.content_preview:
         return Response(
             content=file_record.content_preview,
-            media_type=file_record.mime_type
+            media_type=file_record.mime_type,
+            headers={"Content-Disposition": f'{disposition}; filename="{file_record.name}"'} if download else None
         )
 
     raise HTTPException(status_code=404, detail="Document content unavailable")
 
 @router.get("/{file_id}/download-url")
 def get_download_url(file_id: str, db: Session = Depends(get_db)):
-    """Generates presigned download URL."""
     file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
     if not file_record:
         raise HTTPException(status_code=404, detail="File not found")
 
-    url = minio_service.get_presigned_url(file_record.storage_key or file_record.id)
-    
+    download_url = f"http://localhost:8000/api/v1/files/{file_record.id}/content?download=true"
+
     log_activity(
         db=db,
         file_id=file_record.id,
@@ -194,14 +201,15 @@ def get_download_url(file_id: str, db: Session = Depends(get_db)):
         details=f"Generated download access for '{file_record.name}'"
     )
 
-    return {"downloadUrl": url, "fileName": file_record.name, "sizeBytes": file_record.size_bytes}
+    return {"downloadUrl": download_url, "fileName": file_record.name, "sizeBytes": file_record.size_bytes}
+
 
 @router.patch("/{file_id}", response_model=VDRFileResponse)
 def update_file(
     file_id: str,
     updates: VDRFileUpdate,
-    actorName: Optional[str] = Query(None),
-    actorRole: Optional[str] = Query(None),
+    actorName: str | None = Query(None),
+    actorRole: str | None = Query(None),
     db: Session = Depends(get_db)
 ):
     file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
@@ -245,8 +253,8 @@ def update_file(
 @router.delete("/{file_id}")
 def delete_file(
     file_id: str,
-    actorName: Optional[str] = Query(None),
-    actorRole: Optional[str] = Query(None),
+    actorName: str | None = Query(None),
+    actorRole: str | None = Query(None),
     db: Session = Depends(get_db)
 ):
     file_record = db.query(FileModel).filter(FileModel.id == file_id).first()
@@ -275,7 +283,7 @@ def batch_delete(payload: BatchDeleteRequest, db: Session = Depends(get_db)):
     for fid in payload.fileIds:
         deleted = delete_cascade(db, fid)
         all_deleted.extend(deleted)
-    
+
     db.commit()
     return BatchOperationResponse(
         success=True,
@@ -287,8 +295,8 @@ def batch_delete(payload: BatchDeleteRequest, db: Session = Depends(get_db)):
 @router.post("/batch-tag", response_model=BatchOperationResponse)
 def batch_tag(
     payload: BatchTagRequest,
-    actorName: Optional[str] = Query(None),
-    actorRole: Optional[str] = Query(None),
+    actorName: str | None = Query(None),
+    actorRole: str | None = Query(None),
     db: Session = Depends(get_db)
 ):
     files = db.query(FileModel).filter(FileModel.id.in_(payload.fileIds)).all()
@@ -304,7 +312,7 @@ def batch_tag(
             actor_name=actorName,
             actor_role=actorRole # type: ignore
         )
-    
+
     db.commit()
     return BatchOperationResponse(
         success=True,

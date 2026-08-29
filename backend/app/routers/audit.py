@@ -1,6 +1,7 @@
-from typing import List, Optional
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
+
 from app.database import get_db
 from app.models.db_models import AuditLogModel
 from app.models.schemas import AuditLogCreate, AuditLogResponse
@@ -8,11 +9,11 @@ from app.services.audit_service import log_activity
 
 router = APIRouter(prefix="/audit-logs", tags=["Audit Trail"])
 
-@router.get("", response_model=List[AuditLogResponse])
+@router.get("", response_model=list[AuditLogResponse])
 def get_audit_logs(
-    fileId: Optional[str] = Query(None, description="Filter logs by target document/folder ID"),
-    role: Optional[str] = Query(None, description="Filter logs by actor role"),
-    action: Optional[str] = Query(None, description="Filter logs by action type"),
+    fileId: str | None = Query(None, description="Filter logs by target document/folder ID"),
+    role: str | None = Query(None, description="Filter logs by actor role"),
+    action: str | None = Query(None, description="Filter logs by action type"),
     limit: int = Query(50, ge=1, le=500, description="Max records to return"),
     skip: int = Query(0, ge=0, description="Offset"),
     db: Session = Depends(get_db)

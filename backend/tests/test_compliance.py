@@ -1,4 +1,3 @@
-import pytest
 
 def test_add_compliance_flag(client):
     response = client.post(

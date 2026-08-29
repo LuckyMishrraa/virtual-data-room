@@ -102,7 +102,7 @@ export const UploadModal: React.FC = () => {
             </div>
             <div>
               <h3 className="text-sm font-bold text-text-primary">
-                Ingest Documents to VDR
+                Upload Documents to VDR
               </h3>
               <p className="text-[11px] text-text-muted">
                 Destination: <span className="font-semibold text-text-primary">{currentFolderName}</span>
