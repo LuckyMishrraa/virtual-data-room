@@ -1,9 +1,11 @@
 import uuid
-from typing import Optional
+
 from sqlalchemy.orm import Session
+
 from app.config import get_utc_now
 from app.models.db_models import AuditLogModel
 from app.models.schemas import ActionType, UserRole
+
 
 def log_activity(
     db: Session,
@@ -11,10 +13,10 @@ def log_activity(
     file_name: str,
     action: ActionType,
     details: str,
-    actor_id: Optional[str] = None,
-    actor_name: Optional[str] = None,
-    actor_role: Optional[UserRole] = None,
-    actor_avatar_url: Optional[str] = None
+    actor_id: str | None = None,
+    actor_name: str | None = None,
+    actor_role: UserRole | None = None,
+    actor_avatar_url: str | None = None
 ) -> AuditLogModel:
     """Standardized helper to record an immutable audit log entry in the database."""
     log_entry = AuditLogModel(

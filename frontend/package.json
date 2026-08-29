@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint .",
+    "type-check": "tsc --noEmit --incremental false",
+    "test:static": "npm run type-check && npm run lint"
   },
   "dependencies": {
     "clsx": "^2.1.1",

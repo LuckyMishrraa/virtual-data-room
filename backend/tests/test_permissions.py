@@ -1,4 +1,3 @@
-import pytest
 
 def test_get_permissions(client):
     response = client.get("/api/v1/files/test-file-1/permissions")

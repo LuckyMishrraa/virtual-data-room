@@ -3,9 +3,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+
+from app.database import Base, get_db
 from app.main import app
-from app.database import Base, get_db, init_db
-from app.models.db_models import FileModel, UserModel, PermissionModel, ComplianceFlagModel, AuditLogModel
+from app.models.db_models import ComplianceFlagModel, FileModel, PermissionModel, UserModel
 
 # In-memory SQLite for tests
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -22,7 +23,7 @@ def db_session():
     """Creates a fresh database schema and session for each test."""
     Base.metadata.create_all(bind=engine)
     session = TestingSessionLocal()
-    
+
     # Pre-seed users and default folders for tests
     now = "2026-08-27T22:00:00Z"
     users = [

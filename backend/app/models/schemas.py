@@ -1,5 +1,6 @@
-from typing import List, Optional, Dict, Literal
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict
 
 SensitivityLevel = Literal['Confidential', 'Restricted', 'Internal Only', 'Public']
 UserRole = Literal['Admin', 'Compliance Officer', 'Advisor', 'Auditor']
@@ -26,7 +27,7 @@ class ComplianceFlagResponse(ComplianceFlagBase):
 
 class VDRFileBase(BaseModel):
     name: str
-    parentId: Optional[str] = None
+    parentId: str | None = None
     isFolder: bool = False
     sizeBytes: int = 0
     mimeType: str = "application/octet-stream"
@@ -34,33 +35,33 @@ class VDRFileBase(BaseModel):
     sensitivity: SensitivityLevel = "Internal Only"
 
 class VDRFileCreate(VDRFileBase):
-    contentPreview: Optional[str] = None
+    contentPreview: str | None = None
 
 class FolderCreate(BaseModel):
     name: str
-    parentId: Optional[str] = None
+    parentId: str | None = None
     sensitivity: SensitivityLevel = "Internal Only"
 
 class VDRFileUpdate(BaseModel):
-    name: Optional[str] = None
-    sensitivity: Optional[SensitivityLevel] = None
+    name: str | None = None
+    sensitivity: SensitivityLevel | None = None
 
 class PermissionsUpdate(BaseModel):
-    permissions: Dict[UserRole, RolePermissions]
+    permissions: dict[UserRole, RolePermissions]
 
 class VDRFileResponse(VDRFileBase):
     id: str
-    complianceFlags: List[ComplianceFlagResponse] = []
-    permissions: Dict[UserRole, RolePermissions] = {}
+    complianceFlags: list[ComplianceFlagResponse] = []
+    permissions: dict[UserRole, RolePermissions] = {}
     createdAt: str
     updatedAt: str
-    storageKey: Optional[str] = None
-    contentPreview: Optional[str] = None
+    storageKey: str | None = None
+    contentPreview: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 class BreadcrumbItem(BaseModel):
-    id: Optional[str] = None
+    id: str | None = None
     name: str
     isRoot: bool = False
 
@@ -69,27 +70,27 @@ class TreeNode(BaseModel):
     name: str
     isFolder: bool
     sensitivity: SensitivityLevel
-    parentId: Optional[str] = None
-    children: List['TreeNode'] = []
+    parentId: str | None = None
+    children: list['TreeNode'] = []
 
 class BatchDeleteRequest(BaseModel):
-    fileIds: List[str]
+    fileIds: list[str]
 
 class BatchTagRequest(BaseModel):
-    fileIds: List[str]
+    fileIds: list[str]
     sensitivity: SensitivityLevel
 
 class BatchOperationResponse(BaseModel):
     success: bool
     affectedCount: int
-    affectedIds: List[str]
+    affectedIds: list[str]
     message: str
 
 class ActorSchema(BaseModel):
     id: str
     name: str
     role: UserRole
-    avatarUrl: Optional[str] = None
+    avatarUrl: str | None = None
 
 class AuditLogCreate(BaseModel):
     fileId: str
@@ -109,6 +110,6 @@ class UserResponse(BaseModel):
     name: str
     role: UserRole
     email: str
-    avatarUrl: Optional[str] = None
+    avatarUrl: str | None = None
 
     model_config = ConfigDict(from_attributes=True)

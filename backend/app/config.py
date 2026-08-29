@@ -1,17 +1,18 @@
 import os
-from datetime import datetime, timezone
-from typing import List
+from datetime import UTC, datetime
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 
 def get_utc_now() -> str:
     """Returns current UTC timestamp formatted as ISO string with Z."""
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Virtual Data Room (VDR) API"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
-    
+
     # MinIO Storage Settings
     MINIO_ENDPOINT: str = os.getenv("MINIO_ENDPOINT", "minio:9000")
     MINIO_PUBLIC_ENDPOINT: str = os.getenv("MINIO_PUBLIC_ENDPOINT", "localhost:9000")
@@ -24,7 +25,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./vdr.db")
 
     # CORS Settings
-    CORS_ORIGINS: List[str] = [
+    CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://frontend:3000",

@@ -1,18 +1,19 @@
 import io
 import logging
-from typing import Optional, Dict
+from datetime import timedelta
+
 import urllib3
 from minio import Minio
-from minio.error import S3Error
+
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 
 class MinioService:
     def __init__(self):
-        self._client: Optional[Minio] = None
+        self._client: Minio | None = None
         self.bucket_name = settings.MINIO_BUCKET_NAME
-        self._memory_storage: Dict[str, bytes] = {} # In-memory buffer fallback
+        self._memory_storage: dict[str, bytes] = {} # In-memory buffer fallback
         self._initialize_client()
 
     def _initialize_client(self):
@@ -79,10 +80,10 @@ class MinioService:
             return io.BytesIO(self._memory_storage[object_name])
         return None
 
-    def get_file_bytes(self, object_name: str) -> Optional[bytes]:
+    def get_file_bytes(self, object_name: str) -> bytes | None:
         if object_name in self._memory_storage:
             return self._memory_storage[object_name]
-        
+
         if self._client:
             try:
                 response = self._client.get_object(self.bucket_name, object_name)
@@ -94,18 +95,20 @@ class MinioService:
                 self._client = None
         return None
 
-    def get_presigned_url(self, object_name: str, expires_seconds: int = 3600) -> str:
+    def get_presigned_url(self, object_name: str, filename: str | None = None, expires_seconds: int = 3600) -> str:
         if self._client:
             try:
-                return self._client.presigned_get_object(
+                url = self._client.presigned_get_object(
                     bucket_name=self.bucket_name,
                     object_name=object_name,
-                    expires=expires_seconds
+                    expires=timedelta(seconds=expires_seconds),
+                    response_headers={"response-content-disposition": f'attachment; filename="{filename or object_name}"'}
                 )
+                return url.replace("minio:9000", "localhost:9000")
             except Exception:
                 self._client = None
 
-        return f"/api/v1/files/{object_name}/content"
+        return f"http://localhost:8000/api/v1/files/{object_name}/content?download=true"
 
     def delete_file(self, object_name: str) -> bool:
         deleted = False

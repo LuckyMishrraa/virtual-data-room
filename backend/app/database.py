@@ -1,6 +1,8 @@
-from typing import Generator
+from collections.abc import Generator
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import Session, sessionmaker
+
 from app.config import settings
 from app.models.db_models import Base, UserModel
 
@@ -23,7 +25,7 @@ def get_db() -> Generator[Session, None, None]:
 def init_db():
     """Initializes database schema and ensures standard RBAC personas are seeded."""
     Base.metadata.create_all(bind=engine)
-    
+
     db: Session = SessionLocal()
     try:
         # Seed 4 Core Role Personas if not already existing

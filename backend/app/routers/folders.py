@@ -1,13 +1,14 @@
 import uuid
-from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+
 from app.config import get_utc_now
 from app.database import get_db
 from app.models.db_models import FileModel, PermissionModel
-from app.models.schemas import FolderCreate, VDRFileResponse, BreadcrumbItem
-from app.services.file_service import format_file_response, get_breadcrumbs, delete_cascade
+from app.models.schemas import BreadcrumbItem, FolderCreate, VDRFileResponse
 from app.services.audit_service import log_activity
+from app.services.file_service import delete_cascade, format_file_response, get_breadcrumbs
 
 router = APIRouter(prefix="/folders", tags=["Folders"])
 
@@ -69,8 +70,8 @@ def create_folder(payload: FolderCreate, db: Session = Depends(get_db)):
 
     return format_file_response(folder)
 
-@router.get("/breadcrumbs/{folder_id}", response_model=List[BreadcrumbItem])
-def get_folder_breadcrumbs(folder_id: Optional[str] = None, db: Session = Depends(get_db)):
+@router.get("/breadcrumbs/{folder_id}", response_model=list[BreadcrumbItem])
+def get_folder_breadcrumbs(folder_id: str | None = None, db: Session = Depends(get_db)):
     """Returns ordered breadcrumb path from Root to the requested folder."""
     if folder_id in ("root", "null", "none"):
         folder_id = None
