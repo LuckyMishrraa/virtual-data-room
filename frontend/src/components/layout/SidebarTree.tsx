@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   FileText,
   Lock,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,11 +25,28 @@ export const SidebarTree: React.FC = () => {
     navigateToFolder,
     setSensitivityFilter,
     sensitivityFilter,
-    toggleAuditDrawer,
+    isMobileSidebarOpen,
+    toggleMobileSidebar,
   } = useVDRStore();
 
-  return (
-    <aside className="w-64 shrink-0 border-r border-border bg-surface flex flex-col h-[calc(100vh-4rem)] select-none">
+  const renderSidebarContent = (isMobile = false) => (
+    <>
+      {isMobile && (
+        <div className="p-3 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Folder className="w-4 h-4 text-blue-500" />
+            <span className="font-bold text-xs text-text-primary">Folder Navigation</span>
+          </div>
+          <button
+            onClick={() => toggleMobileSidebar(false)}
+            className="p-1 rounded-lg hover:bg-surface-raised text-text-muted hover:text-text-primary"
+            title="Close navigation"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Quick Access Section */}
       <div className="p-3 border-b border-border space-y-1">
         <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">
@@ -39,6 +57,7 @@ export const SidebarTree: React.FC = () => {
           onClick={() => {
             setSensitivityFilter("");
             navigateToFolder(null);
+            if (isMobile) toggleMobileSidebar(false);
           }}
           className={cn(
             "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors",
@@ -52,7 +71,10 @@ export const SidebarTree: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setSensitivityFilter("Confidential")}
+          onClick={() => {
+            setSensitivityFilter("Confidential");
+            if (isMobile) toggleMobileSidebar(false);
+          }}
           className={cn(
             "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors",
             sensitivityFilter === "Confidential"
@@ -65,7 +87,10 @@ export const SidebarTree: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setSensitivityFilter("Restricted")}
+          onClick={() => {
+            setSensitivityFilter("Restricted");
+            if (isMobile) toggleMobileSidebar(false);
+          }}
           className={cn(
             "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors",
             sensitivityFilter === "Restricted"
@@ -91,7 +116,7 @@ export const SidebarTree: React.FC = () => {
         ) : (
           <div className="space-y-0.5">
             {tree.map((node) => (
-              <TreeItem key={node.id} node={node} level={0} />
+              <TreeItem key={node.id} node={node} level={0} isMobile={isMobile} />
             ))}
           </div>
         )}
@@ -117,13 +142,35 @@ export const SidebarTree: React.FC = () => {
           <span>5.0 GB Quota</span>
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop Sidebar (Permanent) */}
+      <aside className="w-64 shrink-0 border-r border-border bg-surface flex-col h-[calc(100vh-4rem)] select-none hidden lg:flex">
+        {renderSidebarContent(false)}
+      </aside>
+
+      {/* Mobile Overlay Drawer */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs animate-in fade-in"
+            onClick={() => toggleMobileSidebar(false)}
+          />
+          <aside className="relative w-72 max-w-[85vw] h-full bg-surface border-r border-border flex flex-col shadow-2xl z-10 animate-in slide-in-from-left duration-200 select-none">
+            {renderSidebarContent(true)}
+          </aside>
+        </div>
+      )}
+    </>
   );
 };
 
-const TreeItem: React.FC<{ node: TreeNode; level: number }> = ({ node, level }) => {
+const TreeItem: React.FC<{ node: TreeNode; level: number; isMobile?: boolean }> = ({ node, level, isMobile }) => {
   const [isOpen, setIsOpen] = useState(true);
-  const { currentFolderId, navigateToFolder } = useVDRStore();
+  const { currentFolderId, navigateToFolder, toggleMobileSidebar } = useVDRStore();
 
   const isFolder = node.isFolder;
   const isSelected = currentFolderId === node.id;
@@ -135,6 +182,7 @@ const TreeItem: React.FC<{ node: TreeNode; level: number }> = ({ node, level }) 
         onClick={() => {
           if (isFolder) {
             navigateToFolder(node.id);
+            if (isMobile) toggleMobileSidebar(false);
           }
         }}
         className={cn(

@@ -14,6 +14,7 @@ import {
   ChevronDown,
   UserCheck,
   Lock,
+  Menu,
 } from "lucide-react";
 import { getRoleBadge } from "@/lib/utils";
 
@@ -29,20 +30,31 @@ export const Navbar: React.FC = () => {
     toggleAuditDrawer,
     toggleUploadModal,
     toggleNewFolderModal,
+    toggleMobileSidebar,
     auditLogs,
   } = useVDRStore();
 
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
   // RBAC permissions check for action gating
-  const isAuditor = currentUser.role === "Auditor";
+  const canManage = currentUser.role === "Admin" || currentUser.role === "Compliance Officer";
   const roleBadge = getRoleBadge(currentUser.role);
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b border-border bg-surface/90 backdrop-blur-md transition-colors">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-surface/90 backdrop-blur-md transition-colors">
       <div className="flex h-16 items-center justify-between px-4 sm:px-6 gap-4">
         {/* Brand & Security Stamp */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
+          {/* Mobile Sidebar Hamburger Toggle */}
+          <button
+            onClick={() => toggleMobileSidebar()}
+            className="lg:hidden p-2 rounded-xl border border-border bg-surface hover:bg-surface-raised text-text-primary transition-colors"
+            title="Toggle Folder Navigation"
+            aria-label="Toggle Folder Navigation"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 shadow-md shadow-blue-500/20 text-white font-black text-lg tracking-wider">
             <ShieldCheck className="w-6 h-6" />
           </div>
@@ -50,9 +62,6 @@ export const Navbar: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-base tracking-tight text-text-primary">
                 ACUMEN <span className="text-blue-600 dark:text-blue-400">VDR</span>
-              </span>
-              <span className="hidden sm:inline-flex items-center gap-1 rounded-md bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                AES-256
               </span>
             </div>
             <p className="text-[11px] text-text-muted hidden md:block">
@@ -80,22 +89,22 @@ export const Navbar: React.FC = () => {
           {/* Create Folder Button */}
           <button
             onClick={() => toggleNewFolderModal(true)}
-            disabled={isAuditor}
-            title={isAuditor ? "Auditors have read-only access (Folder creation restricted)" : "Create New Folder"}
+            disabled={!canManage}
+            title={!canManage ? `${currentUser.role}s have read-only access (Folder creation restricted)` : "Create New Folder"}
             className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 text-xs font-semibold rounded-xl border border-border bg-surface hover:bg-surface-raised text-text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs"
           >
-            {isAuditor ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <FolderPlus className="w-3.5 h-3.5 text-blue-500" />}
+            {!canManage ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <FolderPlus className="w-3.5 h-3.5 text-blue-500" />}
             <span>New Folder</span>
           </button>
 
           {/* Upload Button */}
           <button
             onClick={() => toggleUploadModal(true)}
-            disabled={isAuditor}
-            title={isAuditor ? "Auditors have read-only access (Upload restricted)" : "Upload Documents"}
+            disabled={!canManage}
+            title={!canManage ? `${currentUser.role}s have read-only access (Upload restricted)` : "Upload Documents"}
             className="inline-flex items-center gap-1.5 h-9 px-3.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
-            {isAuditor ? <Lock className="w-3.5 h-3.5" /> : <Upload className="w-3.5 h-3.5" />}
+            {!canManage ? <Lock className="w-3.5 h-3.5" /> : <Upload className="w-3.5 h-3.5" />}
             <span className="hidden xs:inline">Upload</span>
           </button>
 
@@ -153,10 +162,10 @@ export const Navbar: React.FC = () => {
             {isRoleDropdownOpen && (
               <>
                 <div
-                  className="fixed inset-0 z-40"
+                  className="fixed inset-0 z-[60]"
                   onClick={() => setIsRoleDropdownOpen(false)}
                 />
-                <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-border bg-surface shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-border bg-surface shadow-2xl p-2 z-[70] animate-in fade-in zoom-in-95 duration-150">
                   <div className="px-3 py-2 border-b border-border mb-1">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-text-muted">
                       Switch Role (RBAC Simulation)
@@ -177,11 +186,10 @@ export const Navbar: React.FC = () => {
                             switchUserRole(user.role);
                             setIsRoleDropdownOpen(false);
                           }}
-                          className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors ${
-                            isSelected
-                              ? "bg-blue-500/10 border border-blue-500/30"
-                              : "hover:bg-surface-raised"
-                          }`}
+                          className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors ${isSelected
+                            ? "bg-blue-500/10 border border-blue-500/30"
+                            : "hover:bg-surface-raised"
+                            }`}
                         >
                           <img
                             src={user.avatarUrl}

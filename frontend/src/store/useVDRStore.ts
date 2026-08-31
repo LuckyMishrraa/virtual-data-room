@@ -81,6 +81,7 @@ interface VDRState {
   currentUser: UserPersona;
 
   // Modals and Drawers
+  isMobileSidebarOpen: boolean;
   isAuditDrawerOpen: boolean;
   isUploadModalOpen: boolean;
   isNewFolderModalOpen: boolean;
@@ -110,6 +111,7 @@ interface VDRState {
   switchUserRole: (role: UserRole) => void;
 
   // Modals toggle
+  toggleMobileSidebar: (open?: boolean) => void;
   toggleAuditDrawer: (open?: boolean) => void;
   toggleUploadModal: (open?: boolean) => void;
   toggleNewFolderModal: (open?: boolean) => void;
@@ -156,6 +158,7 @@ export const useVDRStore = create<VDRState>((set, get) => ({
   users: DEFAULT_USERS,
   currentUser: DEFAULT_USERS[0],
 
+  isMobileSidebarOpen: false,
   isAuditDrawerOpen: false,
   isUploadModalOpen: false,
   isNewFolderModalOpen: false,
@@ -374,6 +377,7 @@ export const useVDRStore = create<VDRState>((set, get) => ({
     get().fetchInitialData();
   },
 
+  toggleMobileSidebar: (open) => set({ isMobileSidebarOpen: open !== undefined ? open : !get().isMobileSidebarOpen }),
   toggleAuditDrawer: (open) => {
     const next = open !== undefined ? open : !get().isAuditDrawerOpen;
     set({ isAuditDrawerOpen: next });

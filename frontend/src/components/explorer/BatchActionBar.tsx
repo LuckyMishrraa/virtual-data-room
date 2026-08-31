@@ -21,7 +21,7 @@ export const BatchActionBar: React.FC = () => {
   } = useVDRStore();
 
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
-  const isAuditor = currentUser.role === "Auditor";
+  const canManage = currentUser.role === "Admin" || currentUser.role === "Compliance Officer";
 
   if (selectedFileIds.length < 2) return null;
 
@@ -42,7 +42,7 @@ export const BatchActionBar: React.FC = () => {
         <div className="relative">
           <button
             onClick={() => setIsTagDropdownOpen(!isTagDropdownOpen)}
-            disabled={isAuditor}
+            disabled={!canManage}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-600 disabled:opacity-40 transition-colors"
           >
             <Lock className="w-3.5 h-3.5 text-blue-400" />
@@ -81,7 +81,7 @@ export const BatchActionBar: React.FC = () => {
               batchDeleteAction();
             }
           }}
-          disabled={isAuditor}
+          disabled={!canManage}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 text-xs font-semibold border border-rose-500/30 disabled:opacity-40 transition-colors"
         >
           <Trash2 className="w-3.5 h-3.5" />

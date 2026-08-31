@@ -112,7 +112,10 @@ export const DocumentPreviewer: React.FC = () => {
     } catch {}
   };
 
-  const isAuditor = currentUser.role === "Auditor";
+  const canManage = currentUser.role === "Admin" || currentUser.role === "Compliance Officer";
+  const perm = selectedFile?.permissions?.[currentUser.role] || { canView: true, canEdit: canManage, canShare: true };
+  const canViewFile = perm.canView !== false;
+  const canShareFile = perm.canShare !== false;
   const ext = selectedFile?.fileExtension?.toLowerCase() || "";
   const flags = selectedFile?.complianceFlags || [];
 
@@ -175,20 +178,21 @@ export const DocumentPreviewer: React.FC = () => {
 
   return (
     <div
-      style={{ width: `${width}px` }}
+      style={typeof window !== "undefined" && window.innerWidth >= 1024 ? { width: `${width}px` } : undefined}
       className={cn(
-        "relative h-[calc(100vh-4rem)] border-l border-border bg-surface flex flex-col shrink-0 shadow-2xl z-20",
+        "fixed top-16 inset-x-0 bottom-0 z-40 w-full bg-surface flex flex-col shadow-2xl",
+        "lg:relative lg:top-auto lg:inset-auto lg:h-[calc(100vh-4rem)] lg:border-l lg:border-border lg:shrink-0 lg:z-20",
         isDragging ? "transition-none select-none" : "transition-[width] duration-150 ease-out"
       )}
     >
-      {/* Resizable Left Edge Slider Handle */}
+      {/* Resizable Left Edge Slider Handle (Desktop Only) */}
       <div
         onPointerDown={(e) => {
           e.preventDefault();
           setIsDragging(true);
         }}
         onDoubleClick={handleSnapWidth}
-        className="absolute -left-2 top-0 bottom-0 w-4 cursor-col-resize z-30 group flex items-center justify-center select-none"
+        className="hidden lg:flex absolute -left-2 top-0 bottom-0 w-4 cursor-col-resize z-30 group items-center justify-center select-none"
         title="Drag to resize panel (Double-click to cycle presets: 35% / 50% / 80%)"
       >
         {/* Visual Grip Bar */}
@@ -237,8 +241,9 @@ export const DocumentPreviewer: React.FC = () => {
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             onClick={handleDownload}
-            className="p-1.5 rounded-lg border border-border bg-surface hover:bg-surface-raised text-text-secondary hover:text-text-primary"
-            title="Download Document"
+            disabled={!canShareFile}
+            className="p-1.5 rounded-lg border border-border bg-surface hover:bg-surface-raised text-text-secondary hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+            title={!canShareFile ? "Sharing/Download restricted for this document" : "Download Document"}
           >
             <Download className="w-4 h-4 text-emerald-500" />
           </button>
@@ -312,33 +317,43 @@ export const DocumentPreviewer: React.FC = () => {
       <div className="flex-1 overflow-y-auto p-4">
         {/* TAB 1: Real Content Preview */}
         {activeTab === "content" && (
-          <div className="space-y-4">
-            {IMAGE_EXTENSIONS.includes(ext) ? (
-              <ImageViewer
-                fileId={selectedFile.id}
-                fileName={selectedFile.name}
-                sizeBytes={selectedFile.sizeBytes}
-              />
-            ) : ext === ".pdf" ? (
-              <PdfViewer
-                fileId={selectedFile.id}
-                fileName={selectedFile.name}
-                sizeBytes={selectedFile.sizeBytes}
-              />
-            ) : ext === ".json" ? (
-              <JsonViewer content={fetchedTextContent || selectedFile.contentPreview || "{}"} />
-            ) : (
-              <TextViewer
-                content={
-                  fetchedTextContent ||
-                  selectedFile.contentPreview ||
-                  "No raw text preview available. You can download the binary directly."
-                }
-                complianceFlags={flags}
-                onSelectFlag={(f) => setInspectedFlag(f)}
-              />
-            )}
-          </div>
+          !canViewFile ? (
+            <div className="p-8 text-center border border-dashed border-border rounded-2xl flex flex-col items-center justify-center h-64 bg-surface-raised/40">
+              <Lock className="w-10 h-10 text-rose-500 mb-2" />
+              <h4 className="font-bold text-text-primary">Access Restricted</h4>
+              <p className="text-xs text-text-muted mt-1 max-w-xs">
+                Your role ({currentUser.role}) does not have clearance to view the contents of this document.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {IMAGE_EXTENSIONS.includes(ext) ? (
+                <ImageViewer
+                  fileId={selectedFile.id}
+                  fileName={selectedFile.name}
+                  sizeBytes={selectedFile.sizeBytes}
+                />
+              ) : ext === ".pdf" ? (
+                <PdfViewer
+                  fileId={selectedFile.id}
+                  fileName={selectedFile.name}
+                  sizeBytes={selectedFile.sizeBytes}
+                />
+              ) : ext === ".json" ? (
+                <JsonViewer content={fetchedTextContent || selectedFile.contentPreview || "{}"} />
+              ) : (
+                <TextViewer
+                  content={
+                    fetchedTextContent ||
+                    selectedFile.contentPreview ||
+                    "No raw text preview available. You can download the binary directly."
+                  }
+                  complianceFlags={flags}
+                  onSelectFlag={(f) => setInspectedFlag(f)}
+                />
+              )}
+            </div>
+          )
         )}
 
         {/* TAB 2: Compliance Flags */}
@@ -354,7 +369,7 @@ export const DocumentPreviewer: React.FC = () => {
 
               <button
                 onClick={() => setIsAddFlagOpen(!isAddFlagOpen)}
-                disabled={isAuditor}
+                disabled={!canManage}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold disabled:opacity-40"
               >
                 <Plus className="w-3.5 h-3.5" />
@@ -452,7 +467,7 @@ export const DocumentPreviewer: React.FC = () => {
                     <p className="text-text-secondary text-xs">{flag.reason}</p>
                     <div className="flex items-center justify-between pt-1 border-t border-border/50 text-[10px] text-text-muted">
                       <span>{formatDate(flag.timestamp)}</span>
-                      {!isAuditor && (
+                      {canManage && (
                         <button
                           onClick={() => removeComplianceFlagAction(selectedFile.id, flag.id)}
                           className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold"
@@ -481,7 +496,7 @@ export const DocumentPreviewer: React.FC = () => {
 
               <button
                 onClick={() => setPermissionTarget(selectedFile)}
-                disabled={isAuditor}
+                disabled={!canManage}
                 className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold disabled:opacity-40"
               >
                 <Lock className="w-3.5 h-3.5" />
@@ -562,7 +577,7 @@ export const DocumentPreviewer: React.FC = () => {
           fileId={selectedFile.id}
           onClose={() => setInspectedFlag(null)}
           onResolve={(flagId) => removeComplianceFlagAction(selectedFile.id, flagId)}
-          canResolve={!isAuditor}
+          canResolve={canManage}
         />
       )}
     </div>
