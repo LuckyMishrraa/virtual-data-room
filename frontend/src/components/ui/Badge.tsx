@@ -18,15 +18,16 @@ export const SensitivityBadge: React.FC<SensitivityBadgeProps> = ({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border tracking-wide shadow-xs transition-colors",
+        "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border tracking-wide shadow-xs transition-colors truncate max-w-full",
         badge.bg,
         badge.text,
         badge.border,
         className
       )}
+      title={badge.label}
     >
-      {showDot && <span className={cn("w-1.5 h-1.5 rounded-full animate-pulse", badge.dot)} />}
-      {badge.label}
+      {showDot && <span className={cn("w-1.5 h-1.5 rounded-full shrink-0 animate-pulse", badge.dot)} />}
+      <span className="truncate">{badge.label}</span>
     </span>
   );
 };

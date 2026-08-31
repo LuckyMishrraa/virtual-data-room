@@ -101,13 +101,6 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
           <div className="h-4 w-px bg-border mx-1" />
 
           <button
-            onClick={handleDownload}
-            className="p-1 rounded-lg hover:bg-surface-raised text-emerald-500"
-            title="Download Image"
-          >
-            <Download className="w-4 h-4" />
-          </button>
-          <button
             onClick={() => setIsFullscreen(!isFullscreen)}
             className="p-1 rounded-lg hover:bg-surface-raised text-text-secondary"
             title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}

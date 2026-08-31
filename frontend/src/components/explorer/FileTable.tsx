@@ -36,7 +36,7 @@ export const FileTable: React.FC = () => {
     addToast,
   } = useVDRStore();
 
-  const isAuditor = currentUser.role === "Auditor";
+  const canManage = currentUser.role === "Admin" || currentUser.role === "Compliance Officer";
   const allSelected = files.length > 0 && selectedFileIds.length === files.length;
 
   const handleDownload = async (file: VDRFile, e: React.MouseEvent) => {
@@ -90,118 +90,124 @@ export const FileTable: React.FC = () => {
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
-          {files.map((file) => {
-            const isSelected = selectedFileIds.includes(file.id);
-            const isActive = selectedFile?.id === file.id;
+          {files
+            .filter((file) => file.permissions?.[currentUser.role]?.canView !== false)
+            .map((file) => {
+              const isSelected = selectedFileIds.includes(file.id);
+              const isActive = selectedFile?.id === file.id;
+              const perm = file.permissions?.[currentUser.role] || { canView: true, canEdit: canManage, canShare: true };
+              const canEditFile = canManage && perm.canEdit !== false;
+              const canShareFile = perm.canShare !== false;
 
-            return (
-              <tr
-                key={file.id}
-                onClick={() => selectFile(file)}
-                className={cn(
-                  "hover:bg-surface-raised/60 transition-colors cursor-pointer group",
-                  isSelected && "bg-blue-500/10 dark:bg-blue-500/15",
-                  isActive && "ring-1 ring-inset ring-blue-500"
-                )}
-              >
-                {/* Checkbox */}
-                <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
-                  <button
-                    onClick={() => toggleFileSelection(file.id)}
-                    className={cn(
-                      "w-4 h-4 rounded border flex items-center justify-center transition-colors",
-                      isSelected
-                        ? "bg-blue-600 border-blue-600 text-white"
-                        : "border-border bg-surface hover:border-blue-500"
-                    )}
-                  >
-                    {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
-                  </button>
-                </td>
-
-                {/* Name */}
-                <td className="py-3 px-4">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    {getFileIcon(file)}
-                    <span className="font-semibold text-text-primary truncate max-w-xs md:max-w-md group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                      {file.name}
-                    </span>
-                  </div>
-                </td>
-
-                {/* Sensitivity Badge */}
-                <td className="py-3 px-4">
-                  <SensitivityBadge sensitivity={file.sensitivity} />
-                </td>
-
-                {/* Compliance Status */}
-                <td className="py-3 px-4">
-                  {file.complianceFlags && file.complianceFlags.length > 0 ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20">
-                      <ShieldAlert className="w-3 h-3" />
-                      <span>{file.complianceFlags.length} Flag(s)</span>
-                    </span>
-                  ) : (
-                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                      ✓ Compliant
-                    </span>
+              return (
+                <tr
+                  key={file.id}
+                  onClick={() => selectFile(file)}
+                  className={cn(
+                    "hover:bg-surface-raised/60 transition-colors cursor-pointer group",
+                    isSelected && "bg-blue-500/10 dark:bg-blue-500/15",
+                    isActive && "ring-1 ring-inset ring-blue-500"
                   )}
-                </td>
+                >
+                  {/* Checkbox */}
+                  <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={() => toggleFileSelection(file.id)}
+                      className={cn(
+                        "w-4 h-4 rounded border flex items-center justify-center transition-colors",
+                        isSelected
+                          ? "bg-blue-600 border-blue-600 text-white"
+                          : "border-border bg-surface hover:border-blue-500"
+                      )}
+                    >
+                      {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
+                    </button>
+                  </td>
 
-                {/* Size */}
-                <td className="py-3 px-4 text-text-muted font-mono text-[11px]">
-                  {file.isFolder ? "--" : formatBytes(file.sizeBytes)}
-                </td>
+                  {/* Name */}
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {getFileIcon(file)}
+                      <span className="font-semibold text-text-primary truncate max-w-xs md:max-w-md group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                        {file.name}
+                      </span>
+                    </div>
+                  </td>
 
-                {/* Modified Date */}
-                <td className="py-3 px-4 text-text-muted text-[11px]">
-                  {formatDate(file.updatedAt)}
-                </td>
+                  {/* Sensitivity Badge */}
+                  <td className="py-3 px-4">
+                    <SensitivityBadge sensitivity={file.sensitivity} />
+                  </td>
 
-                {/* Actions */}
-                <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                    {!file.isFolder && (
-                      <button
-                        onClick={(e) => handleDownload(file, e)}
-                        className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-emerald-500"
-                        title="Download"
-                      >
-                        <Download className="w-3.5 h-3.5" />
-                      </button>
+                  {/* Compliance Status */}
+                  <td className="py-3 px-4">
+                    {file.complianceFlags && file.complianceFlags.length > 0 ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                        <ShieldAlert className="w-3 h-3" />
+                        <span>{file.complianceFlags.length} Flag(s)</span>
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                        ✓ Compliant
+                      </span>
                     )}
+                  </td>
 
-                    <button
-                      onClick={() => setRenameTarget(file)}
-                      disabled={isAuditor}
-                      className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-blue-500 disabled:opacity-30"
-                      title="Rename"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
+                  {/* Size */}
+                  <td className="py-3 px-4 text-text-muted font-mono text-[11px]">
+                    {file.isFolder ? "--" : formatBytes(file.sizeBytes)}
+                  </td>
 
-                    <button
-                      onClick={() => setPermissionTarget(file)}
-                      disabled={isAuditor}
-                      className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-purple-500 disabled:opacity-30"
-                      title="Permissions"
-                    >
-                      <Lock className="w-3.5 h-3.5" />
-                    </button>
+                  {/* Modified Date */}
+                  <td className="py-3 px-4 text-text-muted text-[11px]">
+                    {formatDate(file.updatedAt)}
+                  </td>
 
-                    <button
-                      onClick={() => setDeleteTarget(file)}
-                      disabled={isAuditor}
-                      className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-rose-500 disabled:opacity-30"
-                      title="Delete"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
+                  {/* Actions */}
+                  <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                      {!file.isFolder && (
+                        <button
+                          onClick={(e) => handleDownload(file, e)}
+                          disabled={!canShareFile}
+                          className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-emerald-500 disabled:opacity-30"
+                          title={!canShareFile ? "Sharing/Download restricted for this document" : "Download"}
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      <button
+                        onClick={() => setRenameTarget(file)}
+                        disabled={!canEditFile}
+                        className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-blue-500 disabled:opacity-30"
+                        title={!canEditFile ? `${currentUser.role} cannot rename this document` : "Rename"}
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => setPermissionTarget(file)}
+                        disabled={!canManage}
+                        className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-purple-500 disabled:opacity-30"
+                        title={!canManage ? `${currentUser.role} cannot edit permissions` : "Permissions"}
+                      >
+                        <Lock className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        onClick={() => setDeleteTarget(file)}
+                        disabled={!canEditFile}
+                        className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-rose-500 disabled:opacity-30"
+                        title={!canEditFile ? `${currentUser.role} cannot delete this document` : "Delete"}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
         </tbody>
       </table>
     </div>
