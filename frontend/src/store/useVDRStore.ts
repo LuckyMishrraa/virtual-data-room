@@ -88,6 +88,7 @@ interface VDRState {
   renameTarget: VDRFile | null;
   permissionTarget: VDRFile | null;
   deleteTarget: VDRFile | null;
+  isBatchDeleteConfirmOpen: boolean;
 
   // Audit Logs
   auditLogs: AuditLogEntry[];
@@ -118,6 +119,7 @@ interface VDRState {
   setRenameTarget: (file: VDRFile | null) => void;
   setPermissionTarget: (file: VDRFile | null) => void;
   setDeleteTarget: (file: VDRFile | null) => void;
+  toggleBatchDeleteConfirm: (open?: boolean) => void;
   toggleTheme: () => void;
 
   // Notifications
@@ -165,10 +167,11 @@ export const useVDRStore = create<VDRState>((set, get) => ({
   renameTarget: null,
   permissionTarget: null,
   deleteTarget: null,
+  isBatchDeleteConfirmOpen: false,
 
   auditLogs: [],
   isLoading: false,
-  theme: "dark",
+  theme: "light",
   toasts: [],
 
   addToast: (toast) => {
@@ -389,6 +392,7 @@ export const useVDRStore = create<VDRState>((set, get) => ({
   setRenameTarget: (file) => set({ renameTarget: file }),
   setPermissionTarget: (file) => set({ permissionTarget: file }),
   setDeleteTarget: (file) => set({ deleteTarget: file }),
+  toggleBatchDeleteConfirm: (open) => set({ isBatchDeleteConfirmOpen: open !== undefined ? open : !get().isBatchDeleteConfirmOpen }),
 
   uploadFileAction: async (file, sensitivity = "Internal Only") => {
     const { currentFolderId, currentUser } = get();

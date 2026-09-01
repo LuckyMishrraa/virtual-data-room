@@ -69,7 +69,7 @@ export default function VDRDashboard() {
           <div className="flex-1 overflow-y-auto">
             {isLoading && files.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-24 text-text-muted">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
+                <Loader2 className="w-8 h-8 animate-spin text-accent mb-2" />
                 <p className="text-xs font-semibold">Connecting to VDR data engine...</p>
               </div>
             ) : viewMode === "grid" ? (

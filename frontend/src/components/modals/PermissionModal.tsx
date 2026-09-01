@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useVDRStore } from "@/store/useVDRStore";
 import { RolePermissions, UserRole } from "@/types/vdr";
+import { useModal } from "@/lib/useModal";
 import { Lock, X, Check, ShieldCheck } from "lucide-react";
 import { getRoleBadge } from "@/lib/utils";
 
@@ -29,6 +30,12 @@ export const PermissionModal: React.FC = () => {
     }
   }, [permissionTarget]);
 
+  const handleClose = useCallback(() => {
+    setPermissionTarget(null);
+  }, [setPermissionTarget]);
+
+  const dialogRef = useModal(!!permissionTarget, handleClose);
+
   if (!permissionTarget) return null;
 
   const toggleRight = (role: UserRole, right: keyof RolePermissions) => {
@@ -49,15 +56,22 @@ export const PermissionModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-surface shadow-2xl p-6 space-y-4">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="permission-modal-title"
+        tabIndex={-1}
+        className="w-full max-w-lg rounded-2xl border border-border bg-surface shadow-2xl p-6 space-y-4"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 border border-purple-500/20">
+            <div className="p-2 rounded-xl bg-violet-accent/10 text-violet-accent border border-violet-accent/20">
               <Lock className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-text-primary">
+              <h3 id="permission-modal-title" className="text-sm font-bold text-text-primary">
                 Role-Based Access Control (RBAC)
               </h3>
               <p className="text-[11px] text-text-muted truncate max-w-xs">
@@ -107,7 +121,7 @@ export const PermissionModal: React.FC = () => {
                         type="button"
                         onClick={() => toggleRight(role, "canView")}
                         className={`w-5 h-5 mx-auto rounded-md border flex items-center justify-center transition-all ${
-                          perm.canView ? "bg-emerald-600 border-emerald-600 text-white" : "border-border bg-surface"
+                          perm.canView ? "bg-success border-success text-white" : "border-border bg-surface"
                         }`}
                       >
                         {perm.canView && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -120,7 +134,7 @@ export const PermissionModal: React.FC = () => {
                         type="button"
                         onClick={() => toggleRight(role, "canEdit")}
                         className={`w-5 h-5 mx-auto rounded-md border flex items-center justify-center transition-all ${
-                          perm.canEdit ? "bg-blue-600 border-blue-600 text-white" : "border-border bg-surface"
+                          perm.canEdit ? "bg-accent border-accent text-white" : "border-border bg-surface"
                         }`}
                       >
                         {perm.canEdit && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -133,7 +147,7 @@ export const PermissionModal: React.FC = () => {
                         type="button"
                         onClick={() => toggleRight(role, "canShare")}
                         className={`w-5 h-5 mx-auto rounded-md border flex items-center justify-center transition-all ${
-                          perm.canShare ? "bg-purple-600 border-purple-600 text-white" : "border-border bg-surface"
+                          perm.canShare ? "bg-violet-accent border-violet-accent text-white" : "border-border bg-surface"
                         }`}
                       >
                         {perm.canShare && <Check className="w-3.5 h-3.5 stroke-[3]" />}
@@ -147,7 +161,7 @@ export const PermissionModal: React.FC = () => {
         </div>
 
         {/* Security Notice */}
-        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-[11px] text-blue-700 dark:text-blue-300">
+        <div className="flex items-center gap-2 p-2.5 rounded-xl bg-accent/10 border border-accent/20 text-[11px] text-accent dark:text-accent-light">
           <ShieldCheck className="w-4 h-4 shrink-0" />
           <span>Updates immediately take effect and log an immutable audit event.</span>
         </div>
@@ -165,7 +179,7 @@ export const PermissionModal: React.FC = () => {
             type="button"
             onClick={handleSave}
             disabled={isSubmitting}
-            className="px-4 py-2 text-xs font-semibold rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-md disabled:opacity-40"
+            className="px-4 py-2 text-xs font-semibold rounded-xl bg-violet-accent hover:brightness-90 text-white shadow-md disabled:opacity-40"
           >
             {isSubmitting ? "Applying..." : "Save Permission Matrix"}
           </button>

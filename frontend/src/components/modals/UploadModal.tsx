@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { useVDRStore } from "@/store/useVDRStore";
 import { SensitivityLevel } from "@/types/vdr";
 import { formatBytes, cn } from "@/lib/utils";
+import { useModal } from "@/lib/useModal";
 import {
   Upload,
   X,
@@ -26,6 +27,12 @@ export const UploadModal: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleClose = useCallback(() => {
+    if (!isUploading) toggleUploadModal(false);
+  }, [isUploading, toggleUploadModal]);
+
+  const dialogRef = useModal(isUploadModalOpen, handleClose);
 
   if (!isUploadModalOpen) return null;
 
@@ -93,15 +100,22 @@ export const UploadModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-surface shadow-2xl p-6 space-y-4">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="upload-modal-title"
+        tabIndex={-1}
+        className="w-full max-w-lg rounded-2xl border border-border bg-surface shadow-2xl p-6 space-y-4"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20">
+            <div className="p-2 rounded-xl bg-accent/10 text-accent border border-accent/20">
               <Upload className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-text-primary">
+              <h3 id="upload-modal-title" className="text-sm font-bold text-text-primary">
                 Upload Documents to VDR
               </h3>
               <p className="text-[11px] text-text-muted">
@@ -121,13 +135,13 @@ export const UploadModal: React.FC = () => {
         {/* Sensitivity Level Configuration */}
         <div>
           <label className="block text-xs font-bold text-text-secondary mb-1 flex items-center gap-1.5">
-            <Lock className="w-3.5 h-3.5 text-blue-500" />
+            <Lock className="w-3.5 h-3.5 text-accent" />
             Default Security Classification
           </label>
           <select
             value={sensitivity}
             onChange={(e) => setSensitivity(e.target.value as SensitivityLevel)}
-            className="w-full h-9 px-3 rounded-xl border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            className="w-full h-9 px-3 rounded-xl border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-accent/40"
           >
             <option value="Internal Only">Internal Only (Default)</option>
             <option value="Confidential">Confidential (High Security)</option>
@@ -145,8 +159,8 @@ export const UploadModal: React.FC = () => {
           className={cn(
             "p-8 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center text-center cursor-pointer transition-all",
             isDragging
-              ? "border-blue-500 bg-blue-500/10 scale-[0.99]"
-              : "border-border hover:border-blue-500/60 hover:bg-surface-raised/40"
+              ? "border-accent bg-accent/10 scale-[0.99]"
+              : "border-border hover:border-accent/60 hover:bg-surface-raised/40"
           )}
         >
           <input
@@ -156,11 +170,11 @@ export const UploadModal: React.FC = () => {
             onChange={handleFileInputChange}
             className="hidden"
           />
-          <div className="w-12 h-12 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
+          <div className="w-12 h-12 rounded-full bg-accent/10 text-accent flex items-center justify-center mb-3">
             <Upload className="w-6 h-6 animate-bounce" />
           </div>
           <p className="text-xs font-bold text-text-primary">
-            Drag & drop financial documents here, or <span className="text-blue-500 underline">browse</span>
+            Drag & drop financial documents here, or <span className="text-accent underline">browse</span>
           </p>
           <p className="text-[11px] text-text-muted mt-1">
             Supports PDF, Markdown, Text, JSON, CSV, and PNG/JPG (Max 50MB)
@@ -179,7 +193,7 @@ export const UploadModal: React.FC = () => {
                 className="flex items-center justify-between p-2 rounded-xl bg-surface-raised border border-border text-xs"
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <FileText className="w-4 h-4 text-blue-500 shrink-0" />
+                  <FileText className="w-4 h-4 text-text-muted shrink-0" />
                   <span className="truncate font-semibold text-text-primary">{file.name}</span>
                   <span className="text-[10px] text-text-muted shrink-0">
                     ({formatBytes(file.size)})
@@ -188,7 +202,7 @@ export const UploadModal: React.FC = () => {
                 {!isUploading && (
                   <button
                     onClick={() => removeFileFromQueue(i)}
-                    className="p-1 text-text-muted hover:text-rose-500"
+                    className="p-1 text-text-muted hover:text-sev-1"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -201,14 +215,14 @@ export const UploadModal: React.FC = () => {
         {/* Uploading Progress Bar */}
         {isUploading && (
           <div className="space-y-1.5 animate-in fade-in">
-            <div className="flex justify-between text-xs font-bold text-blue-600 dark:text-blue-400">
+            <div className="flex justify-between text-xs font-bold text-accent dark:text-accent-light">
               <span>Streaming to MinIO S3 Object Storage...</span>
               <span>{uploadProgress}%</span>
             </div>
             <div className="w-full bg-border rounded-full h-2 overflow-hidden">
               <div
                 style={{ width: `${uploadProgress}%` }}
-                className="bg-blue-600 h-full rounded-full transition-all duration-200"
+                className="bg-accent h-full rounded-full transition-all duration-200"
               />
             </div>
           </div>
@@ -228,7 +242,7 @@ export const UploadModal: React.FC = () => {
             type="button"
             onClick={handleStartUpload}
             disabled={!files.length || isUploading}
-            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md disabled:opacity-40"
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-accent hover:bg-accent-dark text-white shadow-md disabled:opacity-40"
           >
             <Upload className="w-3.5 h-3.5" />
             <span>{isUploading ? "Uploading..." : `Upload ${files.length} File(s)`}</span>

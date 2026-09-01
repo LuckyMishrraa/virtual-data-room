@@ -41,8 +41,8 @@ export const TextViewer: React.FC<TextViewerProps> = ({
               "flex items-start gap-4 py-0.5 px-2 rounded-md transition-colors group",
               matchingFlag
                 ? matchingFlag.severity === "high"
-                  ? "bg-rose-500/15 border-l-2 border-rose-500"
-                  : "bg-amber-500/15 border-l-2 border-amber-500"
+                  ? "bg-sev-1/15 border-l-2 border-sev-1"
+                  : "bg-sev-2/15 border-l-2 border-sev-2"
                 : "hover:bg-surface-raised"
             )}
           >
@@ -58,8 +58,8 @@ export const TextViewer: React.FC<TextViewerProps> = ({
                   "break-all",
                   matchingFlag
                     ? matchingFlag.severity === "high"
-                      ? "text-rose-700 dark:text-rose-300 font-semibold"
-                      : "text-amber-800 dark:text-amber-300 font-semibold"
+                      ? "text-sev-1 font-semibold"
+                      : "text-sev-2 font-semibold"
                     : "text-text-primary"
                 )}
               >
@@ -69,7 +69,7 @@ export const TextViewer: React.FC<TextViewerProps> = ({
               {matchingFlag && (
                 <button
                   onClick={() => onSelectFlag && onSelectFlag(matchingFlag)}
-                  className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-500 text-white shadow-xs hover:bg-rose-600 transition-colors"
+                  className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-sev-1 text-white shadow-xs hover:brightness-90 transition-colors"
                 >
                   <ShieldAlert className="w-3 h-3" />
                   <span>Flagged ({matchingFlag.severity})</span>

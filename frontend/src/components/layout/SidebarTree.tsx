@@ -34,7 +34,7 @@ export const SidebarTree: React.FC = () => {
       {isMobile && (
         <div className="p-3 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Folder className="w-4 h-4 text-blue-500" />
+            <Folder className="w-4 h-4 text-accent" />
             <span className="font-bold text-xs text-text-primary">Folder Navigation</span>
           </div>
           <button
@@ -62,7 +62,7 @@ export const SidebarTree: React.FC = () => {
           className={cn(
             "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors",
             currentFolderId === null && sensitivityFilter === ""
-              ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold"
+              ? "bg-accent/10 text-accent dark:text-accent-light font-bold"
               : "text-text-secondary hover:bg-surface-raised hover:text-text-primary"
           )}
         >
@@ -78,11 +78,11 @@ export const SidebarTree: React.FC = () => {
           className={cn(
             "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors",
             sensitivityFilter === "Confidential"
-              ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold"
+              ? "bg-sev-1/10 text-sev-1 font-bold"
               : "text-text-secondary hover:bg-surface-raised hover:text-text-primary"
           )}
         >
-          <Lock className="w-4 h-4 text-rose-500" />
+          <Lock className="w-4 h-4 text-sev-1" />
           <span>Confidential Only</span>
         </button>
 
@@ -94,11 +94,11 @@ export const SidebarTree: React.FC = () => {
           className={cn(
             "w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors",
             sensitivityFilter === "Restricted"
-              ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold"
+              ? "bg-sev-2/10 text-sev-2 font-bold"
               : "text-text-secondary hover:bg-surface-raised hover:text-text-primary"
           )}
         >
-          <ShieldAlert className="w-4 h-4 text-amber-500" />
+          <ShieldAlert className="w-4 h-4 text-sev-2" />
           <span>Restricted Assets</span>
         </button>
       </div>
@@ -126,16 +126,16 @@ export const SidebarTree: React.FC = () => {
       <div className="p-3 border-t border-border bg-surface-raised/40">
         <div className="flex items-center justify-between text-xs mb-1.5">
           <span className="flex items-center gap-1.5 font-semibold text-text-secondary">
-            <HardDrive className="w-3.5 h-3.5 text-blue-500" />
+            <HardDrive className="w-3.5 h-3.5 text-accent" />
             MinIO S3 Storage
           </span>
-          <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+          <span className="flex items-center gap-1 text-[11px] font-bold text-success">
             <CheckCircle2 className="w-3 h-3" />
             Online
           </span>
         </div>
         <div className="w-full bg-border rounded-full h-1.5 overflow-hidden mb-1">
-          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full w-[28%] rounded-full" />
+          <div className="bg-gradient-to-r from-accent to-accent-dark h-full w-[28%] rounded-full" />
         </div>
         <div className="flex justify-between text-[10px] text-text-muted">
           <span>1.4 GB used</span>
@@ -188,7 +188,7 @@ const TreeItem: React.FC<{ node: TreeNode; level: number; isMobile?: boolean }> 
         className={cn(
           "group flex items-center gap-1.5 py-1.5 px-2 rounded-xl text-xs font-medium cursor-pointer transition-all",
           isSelected
-            ? "bg-blue-600 text-white font-semibold shadow-xs"
+            ? "bg-accent text-white font-semibold shadow-xs"
             : "text-text-secondary hover:bg-surface-raised hover:text-text-primary"
         )}
         style={{ paddingLeft: `${level * 14 + 8}px` }}

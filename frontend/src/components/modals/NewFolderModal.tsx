@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useVDRStore } from "@/store/useVDRStore";
 import { SensitivityLevel } from "@/types/vdr";
+import { useModal } from "@/lib/useModal";
 import { FolderPlus, X } from "lucide-react";
 
 export const NewFolderModal: React.FC = () => {
@@ -16,6 +17,12 @@ export const NewFolderModal: React.FC = () => {
   const [folderName, setFolderName] = useState("");
   const [sensitivity, setSensitivity] = useState<SensitivityLevel>("Internal Only");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleClose = useCallback(() => {
+    toggleNewFolderModal(false);
+  }, [toggleNewFolderModal]);
+
+  const dialogRef = useModal(isNewFolderModalOpen, handleClose);
 
   if (!isNewFolderModalOpen) return null;
 
@@ -33,15 +40,22 @@ export const NewFolderModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-surface shadow-2xl p-6 space-y-4">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-folder-modal-title"
+        tabIndex={-1}
+        className="w-full max-w-md rounded-2xl border border-border bg-surface shadow-2xl p-6 space-y-4"
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20">
+            <div className="p-2 rounded-xl bg-accent/10 text-accent border border-accent/20">
               <FolderPlus className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-text-primary">Create New Folder</h3>
+              <h3 id="new-folder-modal-title" className="text-sm font-bold text-text-primary">Create New Folder</h3>
               <p className="text-[11px] text-text-muted">
                 Inside: <span className="font-semibold text-text-primary">{currentFolderName}</span>
               </p>
@@ -67,7 +81,7 @@ export const NewFolderModal: React.FC = () => {
               value={folderName}
               onChange={(e) => setFolderName(e.target.value)}
               placeholder="e.g. 2026 Audit Deliverables"
-              className="w-full h-9 px-3 rounded-xl border border-border bg-surface-raised text-text-primary text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              className="w-full h-9 px-3 rounded-xl border border-border bg-surface-raised text-text-primary text-xs font-medium focus:outline-none focus:ring-2 focus:ring-accent/40"
             />
           </div>
 
@@ -78,7 +92,7 @@ export const NewFolderModal: React.FC = () => {
             <select
               value={sensitivity}
               onChange={(e) => setSensitivity(e.target.value as SensitivityLevel)}
-              className="w-full h-9 px-3 rounded-xl border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              className="w-full h-9 px-3 rounded-xl border border-border bg-surface-raised text-text-primary text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-accent/40"
             >
               <option value="Internal Only">Internal Only</option>
               <option value="Confidential">Confidential</option>
@@ -98,7 +112,7 @@ export const NewFolderModal: React.FC = () => {
             <button
               type="submit"
               disabled={!folderName.trim() || isSubmitting}
-              className="px-4 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md disabled:opacity-40"
+              className="px-4 py-2 text-xs font-semibold rounded-xl bg-accent hover:bg-accent-dark text-white shadow-md disabled:opacity-40"
             >
               {isSubmitting ? "Creating..." : "Create Folder"}
             </button>

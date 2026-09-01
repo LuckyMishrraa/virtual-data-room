@@ -58,11 +58,11 @@ export const FileTable: React.FC = () => {
   const getFileIcon = (file: VDRFile) => {
     if (file.isFolder) return <Folder className="w-4 h-4 text-amber-500 shrink-0" />;
     const ext = file.fileExtension?.toLowerCase() || "";
-    if (ext === ".pdf") return <FileText className="w-4 h-4 text-rose-500 shrink-0" />;
-    if (ext === ".json") return <FileCode className="w-4 h-4 text-emerald-500 shrink-0" />;
-    if (ext === ".md" || ext === ".txt") return <FileText className="w-4 h-4 text-blue-500 shrink-0" />;
-    if ([".png", ".jpg", ".jpeg"].includes(ext)) return <FileImage className="w-4 h-4 text-purple-500 shrink-0" />;
-    return <FileText className="w-4 h-4 text-slate-400 shrink-0" />;
+    if (ext === ".pdf") return <FileText className="w-4 h-4 text-text-muted shrink-0" />;
+    if (ext === ".json") return <FileCode className="w-4 h-4 text-text-muted shrink-0" />;
+    if (ext === ".md" || ext === ".txt") return <FileText className="w-4 h-4 text-text-muted shrink-0" />;
+    if ([".png", ".jpg", ".jpeg"].includes(ext)) return <FileImage className="w-4 h-4 text-text-muted shrink-0" />;
+    return <FileText className="w-4 h-4 text-text-muted shrink-0" />;
   };
 
   return (
@@ -75,7 +75,7 @@ export const FileTable: React.FC = () => {
                 onClick={allSelected ? clearSelection : selectAllFiles}
                 className={cn(
                   "w-4 h-4 rounded border flex items-center justify-center transition-colors",
-                  allSelected ? "bg-blue-600 border-blue-600 text-white" : "border-border bg-surface"
+                  allSelected ? "bg-accent border-accent text-white" : "border-border bg-surface"
                 )}
               >
                 {allSelected && <Check className="w-3 h-3 stroke-[3]" />}
@@ -105,19 +105,26 @@ export const FileTable: React.FC = () => {
                   onClick={() => selectFile(file)}
                   className={cn(
                     "hover:bg-surface-raised/60 transition-colors cursor-pointer group",
-                    isSelected && "bg-blue-500/10 dark:bg-blue-500/15",
-                    isActive && "ring-1 ring-inset ring-blue-500"
+                    isSelected && "bg-accent/10 dark:bg-accent/15"
                   )}
                 >
-                  {/* Checkbox */}
-                  <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
+                  {/* Checkbox — the active (currently previewing) row is marked with a
+                      left accent bar instead of a ring, kept distinct from the lighter
+                      background tint that marks a batch-selected row. */}
+                  <td
+                    className={cn(
+                      "py-3 px-4 border-l-4",
+                      isActive ? "border-l-accent" : "border-l-transparent"
+                    )}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       onClick={() => toggleFileSelection(file.id)}
                       className={cn(
                         "w-4 h-4 rounded border flex items-center justify-center transition-colors",
                         isSelected
-                          ? "bg-blue-600 border-blue-600 text-white"
-                          : "border-border bg-surface hover:border-blue-500"
+                          ? "bg-accent border-accent text-white"
+                          : "border-border bg-surface hover:border-accent"
                       )}
                     >
                       {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
@@ -128,7 +135,7 @@ export const FileTable: React.FC = () => {
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-2.5 min-w-0">
                       {getFileIcon(file)}
-                      <span className="font-semibold text-text-primary truncate max-w-xs md:max-w-md group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                      <span className="font-semibold text-text-primary truncate max-w-xs md:max-w-md group-hover:text-accent dark:group-hover:text-accent-light">
                         {file.name}
                       </span>
                     </div>
@@ -142,12 +149,12 @@ export const FileTable: React.FC = () => {
                   {/* Compliance Status */}
                   <td className="py-3 px-4">
                     {file.complianceFlags && file.complianceFlags.length > 0 ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sev-3-bg text-sev-1 border border-sev-3-line">
                         <ShieldAlert className="w-3 h-3" />
                         <span>{file.complianceFlags.length} Flag(s)</span>
                       </span>
                     ) : (
-                      <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <span className="text-[11px] text-success font-semibold">
                         ✓ Compliant
                       </span>
                     )}
@@ -170,7 +177,7 @@ export const FileTable: React.FC = () => {
                         <button
                           onClick={(e) => handleDownload(file, e)}
                           disabled={!canShareFile}
-                          className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-emerald-500 disabled:opacity-30"
+                          className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-accent disabled:opacity-30"
                           title={!canShareFile ? "Sharing/Download restricted for this document" : "Download"}
                         >
                           <Download className="w-3.5 h-3.5" />
@@ -180,7 +187,7 @@ export const FileTable: React.FC = () => {
                       <button
                         onClick={() => setRenameTarget(file)}
                         disabled={!canEditFile}
-                        className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-blue-500 disabled:opacity-30"
+                        className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-accent disabled:opacity-30"
                         title={!canEditFile ? `${currentUser.role} cannot rename this document` : "Rename"}
                       >
                         <Edit2 className="w-3.5 h-3.5" />
@@ -189,7 +196,7 @@ export const FileTable: React.FC = () => {
                       <button
                         onClick={() => setPermissionTarget(file)}
                         disabled={!canManage}
-                        className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-purple-500 disabled:opacity-30"
+                        className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-violet-accent disabled:opacity-30"
                         title={!canManage ? `${currentUser.role} cannot edit permissions` : "Permissions"}
                       >
                         <Lock className="w-3.5 h-3.5" />
@@ -198,7 +205,7 @@ export const FileTable: React.FC = () => {
                       <button
                         onClick={() => setDeleteTarget(file)}
                         disabled={!canEditFile}
-                        className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-rose-500 disabled:opacity-30"
+                        className="p-1 rounded-md hover:bg-surface border border-transparent hover:border-border text-text-muted hover:text-sev-1 disabled:opacity-30"
                         title={!canEditFile ? `${currentUser.role} cannot delete this document` : "Delete"}
                       >
                         <Trash2 className="w-3.5 h-3.5" />

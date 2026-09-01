@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useVDRStore } from "@/store/useVDRStore";
 import { ActionType } from "@/types/vdr";
 import { formatRelativeTime, formatDate, getRoleBadge, cn } from "@/lib/utils";
+import { useModal } from "@/lib/useModal";
 import {
   History,
   X,
@@ -38,6 +39,12 @@ export const AuditLogDrawer: React.FC = () => {
   const [selectedAction, setSelectedAction] = useState<string>("All");
   const [selectedRole, setSelectedRole] = useState<string>("");
 
+  const handleClose = useCallback(() => {
+    toggleAuditDrawer(false);
+  }, [toggleAuditDrawer]);
+
+  const dialogRef = useModal(isAuditDrawerOpen, handleClose);
+
   if (!isAuditDrawerOpen) return null;
 
   const filteredLogs = auditLogs.filter((log) => {
@@ -51,7 +58,7 @@ export const AuditLogDrawer: React.FC = () => {
       case "Uploaded":
         return {
           icon: <Upload className="w-3.5 h-3.5" />,
-          classes: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-300 dark:border-blue-800",
+          classes: "bg-accent/15 text-accent dark:text-accent-light border-accent/30 dark:border-accent/40",
         };
       case "Flagged":
         return {
@@ -100,15 +107,22 @@ export const AuditLogDrawer: React.FC = () => {
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-surface border-l border-border shadow-2xl flex flex-col">
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="audit-drawer-title"
+          tabIndex={-1}
+          className="w-screen max-w-md bg-surface border-l border-border shadow-2xl flex flex-col"
+        >
           {/* Drawer Header */}
           <div className="p-5 border-b border-border bg-surface-raised/40 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+              <div className="p-2 rounded-xl bg-sev-3-bg text-sev-1 border border-sev-3-line">
                 <History className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-text-primary">
+                <h3 id="audit-drawer-title" className="text-sm font-bold text-text-primary">
                   Activity Audit Trail
                 </h3>
                 <p className="text-[11px] text-text-muted">
@@ -152,7 +166,7 @@ export const AuditLogDrawer: React.FC = () => {
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                className="h-8 px-2.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="h-8 px-2.5 rounded-lg border border-border bg-surface-raised text-text-primary text-xs font-medium focus:outline-none focus:ring-1 focus:ring-accent"
               >
                 <option value="">All Roles</option>
                 <option value="Admin">Admin</option>

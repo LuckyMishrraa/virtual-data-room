@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { formatBytes } from "@/lib/utils";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+
 interface ImageViewerProps {
   fileId: string;
   fileName: string;
@@ -32,7 +34,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
   const [hasError, setHasError] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const imageUrl = `http://localhost:8000/api/v1/files/${fileId}/content`;
+  const imageUrl = `${API_BASE_URL}/files/${fileId}/content`;
 
   const handleZoomIn = () => setZoom((z) => Math.min(250, z + 20));
   const handleZoomOut = () => setZoom((z) => Math.max(30, z - 20));
@@ -43,7 +45,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
   };
 
   const handleDownload = () => {
-    window.open(`http://localhost:8000/api/v1/files/${fileId}/content`, "_blank");
+    window.open(imageUrl, "_blank");
   };
 
   return (
@@ -54,7 +56,7 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
       {/* Viewer Toolbar */}
       <div className="flex items-center justify-between p-2.5 bg-surface/90 backdrop-blur-md border-b border-border text-xs z-10">
         <div className="flex items-center gap-2 min-w-0">
-          <ImageIcon className="w-4 h-4 text-purple-500 shrink-0" />
+          <ImageIcon className="w-4 h-4 text-text-muted shrink-0" />
           <span className="font-semibold text-text-primary truncate max-w-[200px]" title={fileName}>
             {fileName}
           </span>
@@ -114,18 +116,18 @@ export const ImageViewer: React.FC<ImageViewerProps> = ({
       <div className="flex-1 overflow-auto flex items-center justify-center p-4 bg-slate-950/40 select-none">
         {isLoading && !hasError && (
           <div className="flex flex-col items-center gap-2 text-text-muted">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-accent" />
             <span className="text-xs">Loading image stream from MinIO...</span>
           </div>
         )}
 
         {hasError ? (
           <div className="flex flex-col items-center gap-3 p-6 text-center text-text-muted">
-            <AlertCircle className="w-8 h-8 text-rose-500" />
+            <AlertCircle className="w-8 h-8 text-sev-1" />
             <p className="text-xs font-semibold text-text-primary">Unable to display image preview</p>
             <button
               onClick={handleDownload}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-dark text-white text-xs font-semibold"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Download File</span>

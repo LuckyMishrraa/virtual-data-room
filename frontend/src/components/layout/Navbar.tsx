@@ -41,8 +41,9 @@ export const Navbar: React.FC = () => {
   const roleBadge = getRoleBadge(currentUser.role);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-surface/90 backdrop-blur-md transition-colors">
-      <div className="flex h-16 items-center justify-between px-4 sm:px-6 gap-4">
+    <header className="sticky top-0 z-50 w-full border-b border-border bg-surface/70 backdrop-blur-md backdrop-saturate-150 transition-colors">
+      <div className="navbar-glow" aria-hidden="true" />
+      <div className="relative flex h-16 items-center justify-between px-4 sm:px-6 gap-4">
         {/* Brand & Security Stamp */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           {/* Mobile Sidebar Hamburger Toggle */}
@@ -55,13 +56,13 @@ export const Navbar: React.FC = () => {
             <Menu className="w-4 h-4" />
           </button>
 
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 shadow-md shadow-blue-500/20 text-white font-black text-lg tracking-wider">
+          <div className="flex h-10 w-10 items-center justify-center rounded-tl-[14px] rounded-tr-[14px] rounded-bl-[14px] rounded-br-[4px] bg-gradient-to-br from-accent to-accent-dark shadow-[inset_0_1px_0_rgba(255,255,255,0.3),0_1px_2px_rgba(33,64,189,0.35),0_8px_18px_-6px_rgba(33,64,189,0.6)] text-white font-black text-lg tracking-wider">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-base tracking-tight text-text-primary">
-                ACUMEN <span className="text-blue-600 dark:text-blue-400">VDR</span>
+              <span className="font-black text-base tracking-tighter text-text-primary">
+                ACUMEN <span className="text-accent dark:text-accent-light">VDR</span>
               </span>
             </div>
             <p className="text-[11px] text-text-muted hidden md:block">
@@ -79,7 +80,7 @@ export const Navbar: React.FC = () => {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search documents, folders, SEC filings, tags..."
-              className="w-full h-9 pl-9 pr-4 text-xs rounded-xl bg-surface-raised border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all"
+              className="w-full h-9 pl-9 pr-4 text-xs rounded-xl bg-surface-raised border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/40 transition-all"
             />
           </div>
         </div>
@@ -93,7 +94,7 @@ export const Navbar: React.FC = () => {
             title={!canManage ? `${currentUser.role}s have read-only access (Folder creation restricted)` : "Create New Folder"}
             className="hidden sm:inline-flex items-center gap-1.5 h-9 px-3 text-xs font-semibold rounded-xl border border-border bg-surface hover:bg-surface-raised text-text-primary disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs"
           >
-            {!canManage ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <FolderPlus className="w-3.5 h-3.5 text-blue-500" />}
+            {!canManage ? <Lock className="w-3.5 h-3.5 text-amber-500" /> : <FolderPlus className="w-3.5 h-3.5 text-accent" />}
             <span>New Folder</span>
           </button>
 
@@ -102,7 +103,7 @@ export const Navbar: React.FC = () => {
             onClick={() => toggleUploadModal(true)}
             disabled={!canManage}
             title={!canManage ? `${currentUser.role}s have read-only access (Upload restricted)` : "Upload Documents"}
-            className="inline-flex items-center gap-1.5 h-9 px-3.5 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="inline-flex items-center gap-1.5 h-9 px-3.5 text-xs font-bold tracking-tight rounded-xl bg-gradient-to-br from-accent to-accent-dark text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_1px_2px_rgba(33,64,189,0.3),0_10px_22px_-8px_rgba(33,64,189,0.7)] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             {!canManage ? <Lock className="w-3.5 h-3.5" /> : <Upload className="w-3.5 h-3.5" />}
             <span className="hidden xs:inline">Upload</span>
@@ -113,10 +114,10 @@ export const Navbar: React.FC = () => {
             onClick={() => toggleAuditDrawer()}
             className="relative inline-flex items-center gap-1.5 h-9 px-3 text-xs font-semibold rounded-xl border border-border bg-surface hover:bg-surface-raised text-text-primary transition-all shadow-xs"
           >
-            <History className="w-4 h-4 text-purple-500" />
+            <History className="w-4 h-4 text-text-muted" />
             <span className="hidden lg:inline">Audit Trail</span>
             {auditLogs.length > 0 && (
-              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400 px-1 text-[11px] font-bold border border-purple-500/20">
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-sev-3-bg text-sev-1 px-1 text-[11px] font-bold border border-sev-3-line">
                 {auditLogs.length}
               </span>
             )}
@@ -137,12 +138,12 @@ export const Navbar: React.FC = () => {
           <div className="relative">
             <button
               onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-              className="flex items-center gap-2 h-10 px-2.5 rounded-xl border border-border bg-surface-raised hover:border-blue-500/40 text-left transition-all"
+              className="flex items-center gap-2 h-10 px-2.5 rounded-xl border border-border bg-surface-raised hover:border-accent/40 text-left transition-all"
             >
               <img
                 src={currentUser.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"}
                 alt={currentUser.name}
-                className="w-7 h-7 rounded-full object-cover ring-1 ring-blue-500/30"
+                className="w-7 h-7 rounded-full object-cover ring-1 ring-accent/30"
               />
               <div className="hidden xl:block">
                 <div className="text-xs font-semibold text-text-primary leading-tight">
@@ -187,7 +188,7 @@ export const Navbar: React.FC = () => {
                             setIsRoleDropdownOpen(false);
                           }}
                           className={`w-full flex items-center gap-3 p-2.5 rounded-xl text-left transition-colors ${isSelected
-                            ? "bg-blue-500/10 border border-blue-500/30"
+                            ? "bg-accent/10 border border-accent/30"
                             : "hover:bg-surface-raised"
                             }`}
                         >
@@ -201,7 +202,7 @@ export const Navbar: React.FC = () => {
                               <span className="text-xs font-semibold text-text-primary truncate">
                                 {user.name}
                               </span>
-                              {isSelected && <UserCheck className="w-3.5 h-3.5 text-blue-500 shrink-0" />}
+                              {isSelected && <UserCheck className="w-3.5 h-3.5 text-accent shrink-0" />}
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               <span className={`text-[10px] font-bold px-1 rounded border ${badge.badgeClass}`}>

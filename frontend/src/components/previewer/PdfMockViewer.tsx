@@ -33,7 +33,7 @@ export const PdfMockViewer: React.FC<PdfMockViewerProps> = ({
       {/* Viewer Toolbar */}
       <div className="flex items-center justify-between p-2.5 bg-surface border-b border-border text-xs">
         <div className="flex items-center gap-1.5 font-semibold text-text-secondary">
-          <ShieldCheck className="w-4 h-4 text-emerald-500" />
+          <ShieldCheck className="w-4 h-4 text-success" />
           <span className="truncate max-w-[200px]">{fileName}</span>
         </div>
 
@@ -105,7 +105,7 @@ export const PdfMockViewer: React.FC<PdfMockViewerProps> = ({
                   CONFIDENTIAL FORM 10-K // ACUMEN GLOBAL ASSETS
                 </p>
               </div>
-              <div className="border border-rose-600 px-2 py-1 text-[9px] font-extrabold text-rose-700 uppercase tracking-widest rounded">
+              <div className="border border-sev-1 px-2 py-1 text-[9px] font-extrabold text-sev-1 uppercase tracking-widest rounded">
                 Strictly Confidential
               </div>
             </div>
@@ -122,18 +122,18 @@ export const PdfMockViewer: React.FC<PdfMockViewerProps> = ({
               {/* Flagged Section Highlight 1 */}
               <div
                 onClick={() => complianceFlags[0] && onSelectFlag && onSelectFlag(complianceFlags[0])}
-                className="p-3 rounded-lg border border-rose-400 bg-rose-50 relative group cursor-pointer"
+                className="p-3 rounded-lg border border-sev-1/40 bg-sev-1/5 relative group cursor-pointer"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-bold text-rose-900 uppercase tracking-wider flex items-center gap-1">
-                    <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                  <span className="text-[10px] font-bold text-sev-1 uppercase tracking-wider flex items-center gap-1">
+                    <ShieldAlert className="w-3.5 h-3.5 text-sev-1" />
                     Compliance Flag: Material Exposure
                   </span>
-                  <span className="text-[9px] font-mono bg-rose-200 text-rose-800 px-1.5 rounded">
+                  <span className="text-[9px] font-mono bg-sev-1/15 text-sev-1 px-1.5 rounded">
                     SEC Rule 17a-4
                   </span>
                 </div>
-                <p className="text-rose-950 font-sans text-[10px]">
+                <p className="text-sev-1 font-sans text-[10px]">
                   "Derivative hedging covenants with Sovereign Fund Alpha ($120M notional swap). Beneficiary accounts withheld per Schedule B confidentiality."
                 </p>
               </div>

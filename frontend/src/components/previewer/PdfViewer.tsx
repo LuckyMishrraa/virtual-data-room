@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { formatBytes } from "@/lib/utils";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+
 interface PdfViewerProps {
   fileId: string;
   fileName: string;
@@ -23,7 +25,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
   sizeBytes,
 }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const pdfUrl = `http://localhost:8000/api/v1/files/${fileId}/content`;
+  const pdfUrl = `${API_BASE_URL}/files/${fileId}/content`;
 
   const handleOpenExternal = () => {
     window.open(pdfUrl, "_blank");
@@ -38,7 +40,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
       {/* PDF Header Toolbar */}
       <div className="flex items-center justify-between p-2.5 bg-surface/90 backdrop-blur-md border-b border-border text-xs z-10">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="p-1 rounded-md bg-rose-500/10 text-rose-500 border border-rose-500/20">
+          <div className="p-1 rounded-md bg-surface-raised text-text-muted border border-border">
             <FileText className="w-4 h-4" />
           </div>
           <span className="font-semibold text-text-primary truncate max-w-[200px]" title={fileName}>
@@ -54,7 +56,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-surface hover:bg-surface-raised text-text-secondary text-[11px] font-semibold transition-colors"
             title="Open in new window / full tab"
           >
-            <ExternalLink className="w-3.5 h-3.5 text-blue-500" />
+            <ExternalLink className="w-3.5 h-3.5 text-accent" />
             <span className="hidden sm:inline">Open in Tab</span>
           </button>
 
@@ -81,14 +83,14 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             className="w-full h-full min-h-[460px] border-none"
           >
             <div className="p-8 text-center text-text-muted flex flex-col items-center justify-center h-full">
-              <FileText className="w-12 h-12 text-rose-500 mb-3" />
+              <FileText className="w-12 h-12 text-text-muted mb-3" />
               <p className="text-sm font-bold text-text-primary">PDF Preview Engine</p>
               <p className="text-xs text-text-secondary mt-1 mb-4">
                 Your browser is unable to render embedded PDF inline.
               </p>
               <button
                 onClick={handleOpenExternal}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent hover:bg-accent-dark text-white text-xs font-semibold shadow-md"
               >
                 <ExternalLink className="w-4 h-4" />
                 <span>Open in Tab</span>
