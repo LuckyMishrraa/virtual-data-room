@@ -15,10 +15,10 @@ import { cn } from "@/lib/utils";
 
 const SENSITIVITY_PILLS: { label: string; value: string; color: string }[] = [
   { label: "All", value: "", color: "border-border" },
-  { label: "Confidential", value: "Confidential", color: "hover:border-rose-500 hover:text-rose-500" },
-  { label: "Restricted", value: "Restricted", color: "hover:border-amber-500 hover:text-amber-500" },
-  { label: "Internal", value: "Internal Only", color: "hover:border-indigo-500 hover:text-indigo-500" },
-  { label: "Public", value: "Public", color: "hover:border-emerald-500 hover:text-emerald-500" },
+  { label: "Confidential", value: "Confidential", color: "hover:border-sev-1 hover:text-sev-1" },
+  { label: "Restricted", value: "Restricted", color: "hover:border-sev-2 hover:text-sev-2" },
+  { label: "Internal", value: "Internal Only", color: "hover:border-sev-3-line hover:text-sev-3-ink" },
+  { label: "Public", value: "Public", color: "hover:border-border-strong hover:text-text-primary" },
 ];
 
 const FILE_TYPE_OPTIONS = [
@@ -57,7 +57,7 @@ export const ExplorerToolbar: React.FC = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search documents..."
-            className="w-full h-9 pl-9 pr-3 text-xs rounded-xl bg-surface-raised border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            className="w-full h-9 pl-9 pr-3 text-xs rounded-xl bg-surface-raised border border-border text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/40"
           />
         </div>
 
@@ -90,7 +90,7 @@ export const ExplorerToolbar: React.FC = () => {
             <select
               value={fileTypeFilter}
               onChange={(e) => setFileTypeFilter(e.target.value)}
-              className="h-8 pl-2.5 pr-7 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-surface-raised text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer appearance-none"
+              className="h-8 pl-2.5 pr-7 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-surface-raised text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer appearance-none"
             >
               {FILE_TYPE_OPTIONS.map((opt) => (
                 <option key={opt.label} value={opt.value}>
@@ -109,7 +109,7 @@ export const ExplorerToolbar: React.FC = () => {
                 const [f, o] = e.target.value.split("-") as [SortField, "asc" | "desc"];
                 setSort(f, o);
               }}
-              className="h-8 pl-2.5 pr-7 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-surface-raised text-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500/40 cursor-pointer appearance-none"
+              className="h-8 pl-2.5 pr-7 text-xs font-medium rounded-lg border border-border bg-surface hover:bg-surface-raised text-text-primary focus:outline-none focus:ring-2 focus:ring-accent/40 cursor-pointer appearance-none"
             >
               <option value="name-asc">Name (A → Z)</option>
               <option value="name-desc">Name (Z → A)</option>
@@ -131,7 +131,7 @@ export const ExplorerToolbar: React.FC = () => {
               className={cn(
                 "p-1.5 rounded-md transition-all",
                 viewMode === "grid"
-                  ? "bg-surface text-blue-600 dark:text-blue-400 shadow-xs"
+                  ? "bg-surface text-accent dark:text-accent-light shadow-xs"
                   : "text-text-muted hover:text-text-primary"
               )}
               title="Grid View"
@@ -143,7 +143,7 @@ export const ExplorerToolbar: React.FC = () => {
               className={cn(
                 "p-1.5 rounded-md transition-all",
                 viewMode === "table"
-                  ? "bg-surface text-blue-600 dark:text-blue-400 shadow-xs"
+                  ? "bg-surface text-accent dark:text-accent-light shadow-xs"
                   : "text-text-muted hover:text-text-primary"
               )}
               title="Table View"

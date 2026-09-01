@@ -12,6 +12,37 @@
   --color-text-muted: var(--text-muted);
   --color-border: var(--border-color);
   --color-border-strong: var(--border-strong);
+
+  /* Brand accent — "Cobalt": the single hue carrying brand, CTA and interactive state.
+     -light is the legible variant for text/icons on dark surfaces; -dark is the
+     hover/gradient-stop shade. */
+  --color-accent: var(--accent);
+  --color-accent-light: var(--accent-light);
+  --color-accent-dark: var(--accent-dark);
+
+  /* Secondary satellite accent, reserved for Permissions/RBAC iconography only —
+     never used for brand/CTA/sensitivity so it stays a minor, disciplined exception. */
+  --color-violet-accent: var(--violet-accent);
+
+  /* Sensitivity ramp — one rose/crimson family at four intensities, replacing the old
+     rose/amber/indigo/emerald four-hue badge system. sev-1 = Confidential (solid),
+     sev-2 = Restricted (solid, lighter), sev-3 = Internal Only (tinted). Public uses
+     the existing neutral text-muted/border tokens — deliberately no color of its own. */
+  --color-sev-1: var(--sev-1);
+  --color-sev-2: var(--sev-2);
+  --color-sev-3-bg: var(--sev-3-bg);
+  --color-sev-3-ink: var(--sev-3-ink);
+  --color-sev-3-line: var(--sev-3-line);
+
+  /* Compliant/positive status — distinct from the sensitivity ramp on purpose. */
+  --color-success: var(--success);
+
+  /* Geist is already loaded by next/font in layout.tsx (self-hosted, zero extra
+     network cost) but was never wired into the type system — the app was rendering
+     on the plain OS system-ui stack. Mapping it here upgrades every font-sans/font-mono
+     usage app-wide, including the font-mono already used on file sizes/dates/hashes. */
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 }
 
 /* Light Theme Variables */
@@ -25,6 +56,19 @@
   --text-muted: #64748b;
   --border-color: #e2e8f0;
   --border-strong: #cbd5e1;
+
+  --accent: #2f54eb;
+  --accent-light: #2f54eb;
+  --accent-dark: #2140bd;
+  --violet-accent: #8156d9;
+
+  --sev-1: #b0173f;
+  --sev-2: #c23a5c;
+  --sev-3-bg: #f6dee4;
+  --sev-3-ink: #8a2f49;
+  --sev-3-line: #edc2cf;
+
+  --success: #0f9d73;
 }
 
 /* Dark Theme Variables (Default) */
@@ -38,13 +82,40 @@
   --text-muted: #6b7280;
   --border-color: #1f2937;
   --border-strong: #374151;
+
+  /* Re-accented for dark navy surfaces: --accent/--sev-1/--sev-2 stay bright enough
+     to still carry white text at a legible contrast on solid fills (checked against
+     WCAG AA); --accent-light and --sev-3-* are for direct text/tint use on the dark
+     surface itself, so they can go lighter still. --sev-2 keeps its light-mode value —
+     it was already the right brightness for a solid white-text chip in either theme. */
+  --accent: #4c6ef5;
+  --accent-light: #8da3ff;
+  --accent-dark: #3450c7;
+  --violet-accent: #a78bfa;
+
+  --sev-1: #e0355f;
+  --sev-2: #c23a5c;
+  --sev-3-bg: rgba(224, 53, 95, 0.16);
+  --sev-3-ink: #f3aebd;
+  --sev-3-line: rgba(224, 53, 95, 0.32);
+
+  --success: #22c48c;
 }
 
 body {
   background-color: var(--base);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   overflow-x: hidden;
+}
+
+/* Soft two-tone gradient wash behind the app — light mode only, restrained on purpose
+   (a B2B compliance tool, not a consumer landing page). Dark mode keeps a flat --base. */
+:root:not(.dark) body {
+  background-image:
+    radial-gradient(1100px 520px at 12% -10%, rgba(47, 84, 235, 0.08), transparent 60%),
+    radial-gradient(900px 480px at 105% 8%, rgba(176, 23, 63, 0.045), transparent 55%);
+  background-attachment: fixed;
 }
 
 /* Glassmorphism Styles */
@@ -80,15 +151,33 @@ body {
 /* Micro-animations */
 @keyframes pulseBorder {
   0%, 100% {
-    border-color: rgba(59, 130, 246, 0.4);
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.2);
+    border-color: rgba(47, 84, 235, 0.4);
+    box-shadow: 0 0 0 0 rgba(47, 84, 235, 0.2);
   }
   50% {
-    border-color: rgba(59, 130, 246, 0.9);
-    box-shadow: 0 0 15px 2px rgba(59, 130, 246, 0.25);
+    border-color: rgba(47, 84, 235, 0.9);
+    box-shadow: 0 0 15px 2px rgba(47, 84, 235, 0.25);
   }
 }
 
 .animate-pulse-border {
   animation: pulseBorder 2s infinite ease-in-out;
+}
+
+/* Soft decorative glow used behind the Navbar's glass surface (light mode only) so its
+   backdrop-blur has something visible to frost, per the approved Cobalt direction. */
+.navbar-glow {
+  position: absolute;
+  inset: -80px 0 auto 0;
+  height: 160px;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(420px 180px at 12% 0%, rgba(47, 84, 235, 0.3), transparent 70%),
+    radial-gradient(360px 180px at 92% 0%, rgba(176, 23, 63, 0.16), transparent 70%);
+  filter: blur(30px);
+}
+
+.dark .navbar-glow {
+  display: none;
 }

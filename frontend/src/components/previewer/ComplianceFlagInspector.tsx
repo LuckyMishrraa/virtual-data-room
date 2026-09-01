@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useCallback } from "react";
 import { ComplianceFlag } from "@/types/vdr";
 import { SeverityBadge } from "@/components/ui/Badge";
 import { formatDate } from "@/lib/utils";
+import { useModal } from "@/lib/useModal";
 import { ShieldAlert, CheckCircle2, X } from "lucide-react";
 
 interface ComplianceFlagInspectorProps {
@@ -21,19 +22,32 @@ export const ComplianceFlagInspector: React.FC<ComplianceFlagInspectorProps> = (
   onResolve,
   canResolve,
 }) => {
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  const dialogRef = useModal(!!flag, handleClose);
+
   if (!flag) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-2xl space-y-4">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="flag-inspector-title"
+        tabIndex={-1}
+        className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-2xl space-y-4"
+      >
         {/* Header */}
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-rose-500/10 text-rose-600 border border-rose-500/20">
+            <div className="p-2 rounded-xl bg-sev-1/10 text-sev-1 border border-sev-1/20">
               <ShieldAlert className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-text-primary">
+              <h3 id="flag-inspector-title" className="text-sm font-bold text-text-primary">
                 Compliance Risk Inspection
               </h3>
               <p className="text-[11px] text-text-muted">
@@ -89,7 +103,7 @@ export const ComplianceFlagInspector: React.FC<ComplianceFlagInspectorProps> = (
                 onResolve(flag.id);
                 onClose();
               }}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-600/20"
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl bg-success hover:brightness-90 text-white shadow-md shadow-success/20"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>Mark Resolved</span>

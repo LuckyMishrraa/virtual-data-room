@@ -46,77 +46,79 @@ export function formatRelativeTime(isoString: string): string {
   }
 }
 
+// Single disciplined rose/crimson severity family (replaces the old
+// rose/amber/indigo/emerald four-hue badge system): Confidential and Restricted are
+// solid flat fills at two intensities, Internal Only is a tinted third step, and
+// Public deliberately carries no color of its own — it reuses the app's neutral
+// text-muted/border tokens, signaling "no classification concern" by absence.
+//
+// Confidential is additionally the one tier that breaks from the pill shape (rounded-md
+// instead of rounded-full, plus a color-matched shadow) — severity is encoded through
+// shape and weight as well as color, so the highest tier reads as "declared," not just
+// "differently colored." Restricted/Internal/Public stay pill-shaped and calmer.
 export function getSensitivityBadge(sensitivity: SensitivityLevel) {
   switch (sensitivity) {
     case "Confidential":
       return {
         label: "Confidential",
-        bg: "bg-rose-500/10 dark:bg-rose-500/20",
-        text: "text-rose-700 dark:text-rose-300",
-        border: "border-rose-300 dark:border-rose-800/60",
-        dot: "bg-rose-500",
-        accentGlow: "shadow-rose-500/10",
+        bg: "bg-sev-1 rounded-md",
+        text: "text-white font-extrabold tracking-wide",
+        border: "border-sev-1",
+        dot: "bg-white",
+        accentGlow: "shadow-md shadow-sev-1/35",
       };
     case "Restricted":
       return {
         label: "Restricted",
-        bg: "bg-amber-500/10 dark:bg-amber-500/20",
-        text: "text-amber-800 dark:text-amber-300",
-        border: "border-amber-300 dark:border-amber-800/60",
-        dot: "bg-amber-500",
-        accentGlow: "shadow-amber-500/10",
+        bg: "bg-sev-2",
+        text: "text-white font-extrabold tracking-wide",
+        border: "border-sev-2",
+        dot: "bg-white",
+        accentGlow: "shadow-sm shadow-sev-2/20",
       };
     case "Internal Only":
       return {
         label: "Internal Only",
-        bg: "bg-indigo-500/10 dark:bg-indigo-500/20",
-        text: "text-indigo-700 dark:text-indigo-300",
-        border: "border-indigo-300 dark:border-indigo-800/60",
-        dot: "bg-indigo-500",
-        accentGlow: "shadow-indigo-500/10",
+        bg: "bg-sev-3-bg",
+        text: "text-sev-3-ink font-bold",
+        border: "border-sev-3-line",
+        dot: "bg-sev-3-ink",
+        accentGlow: "",
       };
     case "Public":
       return {
         label: "Public",
-        bg: "bg-emerald-500/10 dark:bg-emerald-500/20",
-        text: "text-emerald-700 dark:text-emerald-300",
-        border: "border-emerald-300 dark:border-emerald-800/60",
-        dot: "bg-emerald-500",
-        accentGlow: "shadow-emerald-500/10",
+        bg: "bg-transparent",
+        text: "text-text-muted",
+        border: "border-border-strong",
+        dot: "bg-text-muted",
+        accentGlow: "",
       };
     default:
       return {
         label: sensitivity,
-        bg: "bg-slate-500/10",
-        text: "text-slate-700 dark:text-slate-300",
-        border: "border-slate-300 dark:border-slate-700",
-        dot: "bg-slate-400",
+        bg: "bg-transparent",
+        text: "text-text-muted",
+        border: "border-border-strong",
+        dot: "bg-text-muted",
         accentGlow: "",
       };
   }
 }
 
+// Role badges no longer carry a distinct hue per role (that was the same "five
+// competing colors" problem as the old sensitivity ramp, just applied to personas).
+// One consistent accent-tinted treatment for all roles; the label text differentiates.
 export function getRoleBadge(role: UserRole) {
+  const badgeClass = "bg-accent/10 text-accent dark:text-accent-light border-accent/25";
   switch (role) {
     case "Admin":
-      return {
-        label: "Admin",
-        badgeClass: "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800",
-      };
+      return { label: "Admin", badgeClass };
     case "Compliance Officer":
-      return {
-        label: "Compliance Officer",
-        badgeClass: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800",
-      };
+      return { label: "Compliance Officer", badgeClass };
     case "Advisor":
-      return {
-        label: "Advisor",
-        badgeClass: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800",
-      };
+      return { label: "Advisor", badgeClass };
     case "Auditor":
-      return {
-        label: "Auditor (Read-Only)",
-        badgeClass: "bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800",
-      };
+      return { label: "Auditor (Read-Only)", badgeClass };
   }
 }

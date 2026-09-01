@@ -28,11 +28,11 @@ export const JsonViewer: React.FC<{ content: string }> = ({ content }) => {
         onClick={handleCopy}
         className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-lg border border-border bg-surface hover:bg-surface-raised text-text-secondary text-[11px] font-semibold transition-colors"
       >
-        {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+        {copied ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
         <span>{copied ? "Copied" : "Copy JSON"}</span>
       </button>
 
-      <pre className="text-blue-600 dark:text-blue-300 leading-relaxed">
+      <pre className="text-accent dark:text-accent-light leading-relaxed">
         {formattedJson}
       </pre>
     </div>

@@ -29,7 +29,7 @@ export const Breadcrumbs: React.FC = () => {
                 )}
               >
                 {crumb.isRoot ? (
-                  <Home className="w-3.5 h-3.5 text-blue-500" />
+                  <Home className="w-3.5 h-3.5 text-accent" />
                 ) : (
                   <Folder className="w-3.5 h-3.5 text-amber-500" />
                 )}

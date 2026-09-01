@@ -18,10 +18,11 @@ export const SensitivityBadge: React.FC<SensitivityBadgeProps> = ({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border tracking-wide shadow-xs transition-colors truncate max-w-full",
+        "inline-flex items-center gap-1.5 px-2.5 py-[3px] rounded-full text-xs font-semibold border tracking-wide shadow-xs transition-colors truncate max-w-full",
         badge.bg,
         badge.text,
         badge.border,
+        badge.accentGlow,
         className
       )}
       title={badge.label}
@@ -37,9 +38,9 @@ export const SeverityBadge: React.FC<{ severity: "low" | "medium" | "high"; clas
   className,
 }) => {
   const config = {
-    high: "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800",
-    medium: "bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800",
-    low: "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-800",
+    high: "bg-sev-1/15 text-sev-1 dark:text-sev-2 border-sev-1/30",
+    medium: "bg-sev-2/15 text-sev-2 dark:text-sev-3-ink border-sev-2/30",
+    low: "bg-accent/10 text-accent dark:text-accent-light border-accent/25",
   }[severity];
 
   return (

@@ -22,17 +22,17 @@ export const ToastContainer: React.FC = () => {
 
 const ToastCard: React.FC<{ toast: ToastItem; onClose: () => void }> = ({ toast, onClose }) => {
   const iconMap = {
-    success: <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />,
-    error: <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0" />,
+    success: <CheckCircle2 className="w-5 h-5 text-success shrink-0" />,
+    error: <AlertCircle className="w-5 h-5 text-sev-1 shrink-0" />,
     warning: <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />,
-    info: <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />,
+    info: <Info className="w-5 h-5 text-accent shrink-0" />,
   };
 
   const borderMap = {
-    success: "border-emerald-500/30 bg-white/95 dark:bg-slate-900/95 shadow-emerald-500/5",
-    error: "border-rose-500/30 bg-white/95 dark:bg-slate-900/95 shadow-rose-500/5",
+    success: "border-success/30 bg-white/95 dark:bg-slate-900/95 shadow-success/5",
+    error: "border-sev-1/30 bg-white/95 dark:bg-slate-900/95 shadow-sev-1/5",
     warning: "border-amber-500/30 bg-white/95 dark:bg-slate-900/95 shadow-amber-500/5",
-    info: "border-blue-500/30 bg-white/95 dark:bg-slate-900/95 shadow-blue-500/5",
+    info: "border-accent/30 bg-white/95 dark:bg-slate-900/95 shadow-accent/5",
   };
 
   return (

@@ -165,15 +165,15 @@ export const DocumentPreviewer: React.FC = () => {
 
   const getHeaderIcon = () => {
     if (IMAGE_EXTENSIONS.includes(ext)) {
-      return <ImageIcon className="w-5 h-5 text-purple-500" />;
+      return <ImageIcon className="w-5 h-5 text-text-muted" />;
     }
     if (ext === ".pdf") {
-      return <FileText className="w-5 h-5 text-rose-500" />;
+      return <FileText className="w-5 h-5 text-text-muted" />;
     }
     if (ext === ".json") {
-      return <FileCode className="w-5 h-5 text-emerald-500" />;
+      return <FileCode className="w-5 h-5 text-text-muted" />;
     }
-    return <FileText className="w-5 h-5 text-blue-500" />;
+    return <FileText className="w-5 h-5 text-text-muted" />;
   };
 
   return (
@@ -200,8 +200,8 @@ export const DocumentPreviewer: React.FC = () => {
           className={cn(
             "w-1 h-12 rounded-full transition-all duration-150 flex items-center justify-center",
             isDragging
-              ? "bg-blue-500 w-1.5 h-16 shadow-[0_0_12px_rgba(59,130,246,0.6)]"
-              : "bg-border/80 group-hover:bg-blue-400 group-hover:h-14"
+              ? "bg-accent w-1.5 h-16 shadow-[0_0_12px_rgba(47,84,235,0.6)]"
+              : "bg-border/80 group-hover:bg-accent-light group-hover:h-14"
           )}
         >
           <GripVertical
@@ -245,7 +245,7 @@ export const DocumentPreviewer: React.FC = () => {
             className="p-1.5 rounded-lg border border-border bg-surface hover:bg-surface-raised text-text-secondary hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
             title={!canShareFile ? "Sharing/Download restricted for this document" : "Download Document"}
           >
-            <Download className="w-4 h-4 text-emerald-500" />
+            <Download className="w-4 h-4 text-accent" />
           </button>
           <button
             onClick={closePreview}
@@ -264,7 +264,7 @@ export const DocumentPreviewer: React.FC = () => {
           className={cn(
             "px-3 py-2.5 border-b-2 transition-all",
             activeTab === "content"
-              ? "border-blue-500 text-blue-600 dark:text-blue-400 font-bold"
+              ? "border-accent text-accent font-bold"
               : "border-transparent text-text-secondary hover:text-text-primary"
           )}
         >
@@ -276,13 +276,13 @@ export const DocumentPreviewer: React.FC = () => {
           className={cn(
             "px-3 py-2.5 border-b-2 transition-all flex items-center gap-1.5",
             activeTab === "flags"
-              ? "border-rose-500 text-rose-600 dark:text-rose-400 font-bold"
+              ? "border-sev-1 text-sev-1 font-bold"
               : "border-transparent text-text-secondary hover:text-text-primary"
           )}
         >
           <span>Compliance</span>
           {flags.length > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-600 dark:text-rose-300 text-[10px] font-bold">
+            <span className="px-1.5 py-0.2 rounded-full bg-sev-1/20 text-sev-1 text-[10px] font-bold">
               {flags.length}
             </span>
           )}
@@ -293,7 +293,7 @@ export const DocumentPreviewer: React.FC = () => {
           className={cn(
             "px-3 py-2.5 border-b-2 transition-all",
             activeTab === "permissions"
-              ? "border-purple-500 text-purple-600 dark:text-purple-400 font-bold"
+              ? "border-violet-accent text-violet-accent font-bold"
               : "border-transparent text-text-secondary hover:text-text-primary"
           )}
         >
@@ -305,7 +305,7 @@ export const DocumentPreviewer: React.FC = () => {
           className={cn(
             "px-3 py-2.5 border-b-2 transition-all",
             activeTab === "history"
-              ? "border-amber-500 text-amber-600 dark:text-amber-400 font-bold"
+              ? "border-text-primary text-text-primary font-bold"
               : "border-transparent text-text-secondary hover:text-text-primary"
           )}
         >
@@ -319,7 +319,7 @@ export const DocumentPreviewer: React.FC = () => {
         {activeTab === "content" && (
           !canViewFile ? (
             <div className="p-8 text-center border border-dashed border-border rounded-2xl flex flex-col items-center justify-center h-64 bg-surface-raised/40">
-              <Lock className="w-10 h-10 text-rose-500 mb-2" />
+              <Lock className="w-10 h-10 text-sev-1 mb-2" />
               <h4 className="font-bold text-text-primary">Access Restricted</h4>
               <p className="text-xs text-text-muted mt-1 max-w-xs">
                 Your role ({currentUser.role}) does not have clearance to view the contents of this document.
@@ -370,7 +370,7 @@ export const DocumentPreviewer: React.FC = () => {
               <button
                 onClick={() => setIsAddFlagOpen(!isAddFlagOpen)}
                 disabled={!canManage}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold disabled:opacity-40"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-sev-1 hover:brightness-90 text-white font-semibold disabled:opacity-40"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add Flag</span>
@@ -381,7 +381,7 @@ export const DocumentPreviewer: React.FC = () => {
             {isAddFlagOpen && (
               <form
                 onSubmit={handleAddFlagSubmit}
-                className="p-3.5 rounded-xl border border-rose-500/30 bg-rose-500/5 space-y-2.5 animate-in fade-in"
+                className="p-3.5 rounded-xl border border-sev-1/30 bg-sev-1/5 space-y-2.5 animate-in fade-in"
               >
                 <div>
                   <label className="block text-[11px] font-semibold text-text-secondary mb-1">
@@ -436,7 +436,7 @@ export const DocumentPreviewer: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-3 py-1 text-xs font-semibold rounded-lg bg-rose-600 text-white hover:bg-rose-700"
+                    className="px-3 py-1 text-xs font-semibold rounded-lg bg-sev-1 text-white hover:brightness-90"
                   >
                     Save Flag
                   </button>
@@ -447,7 +447,7 @@ export const DocumentPreviewer: React.FC = () => {
             {/* List of Flags */}
             {flags.length === 0 ? (
               <div className="p-8 text-center border border-dashed border-border rounded-xl">
-                <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+                <CheckCircle2 className="w-8 h-8 text-success mx-auto mb-2" />
                 <p className="font-bold text-text-primary">No Active Flags</p>
                 <p className="text-[11px] text-text-muted mt-0.5">
                   Document has satisfied automated compliance validation.
@@ -458,7 +458,7 @@ export const DocumentPreviewer: React.FC = () => {
                 {flags.map((flag) => (
                   <div
                     key={flag.id}
-                    className="p-3 rounded-xl border border-border bg-surface-raised/40 space-y-2 hover:border-rose-500/40 transition-colors"
+                    className="p-3 rounded-xl border border-border bg-surface-raised/40 space-y-2 hover:border-sev-1/40 transition-colors"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-text-primary">{flag.lineOrSection}</span>
@@ -470,7 +470,7 @@ export const DocumentPreviewer: React.FC = () => {
                       {canManage && (
                         <button
                           onClick={() => removeComplianceFlagAction(selectedFile.id, flag.id)}
-                          className="text-emerald-600 dark:text-emerald-400 hover:underline font-bold"
+                          className="text-success hover:underline font-bold"
                         >
                           Resolve Flag
                         </button>
@@ -497,7 +497,7 @@ export const DocumentPreviewer: React.FC = () => {
               <button
                 onClick={() => setPermissionTarget(selectedFile)}
                 disabled={!canManage}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-semibold disabled:opacity-40"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-violet-accent hover:brightness-90 text-white font-semibold disabled:opacity-40"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span>Edit Matrix</span>
@@ -521,13 +521,13 @@ export const DocumentPreviewer: React.FC = () => {
                       <tr key={role} className="hover:bg-surface-raised/40">
                         <td className="py-2.5 px-3 font-semibold text-text-primary">{role}</td>
                         <td className="py-2.5 px-3 text-center font-bold">
-                          {perm.canView ? <span className="text-emerald-500">✓</span> : <span className="text-rose-500">✕</span>}
+                          {perm.canView ? <span className="text-success">✓</span> : <span className="text-sev-1">✕</span>}
                         </td>
                         <td className="py-2.5 px-3 text-center font-bold">
-                          {perm.canEdit ? <span className="text-emerald-500">✓</span> : <span className="text-rose-500">✕</span>}
+                          {perm.canEdit ? <span className="text-success">✓</span> : <span className="text-sev-1">✕</span>}
                         </td>
                         <td className="py-2.5 px-3 text-center font-bold">
-                          {perm.canShare ? <span className="text-emerald-500">✓</span> : <span className="text-rose-500">✕</span>}
+                          {perm.canShare ? <span className="text-success">✓</span> : <span className="text-sev-1">✕</span>}
                         </td>
                       </tr>
                     );
@@ -549,7 +549,7 @@ export const DocumentPreviewer: React.FC = () => {
               </div>
               <div className="flex justify-between py-1 border-b border-border/50">
                 <span className="text-text-muted">Storage Bucket:</span>
-                <span className="font-mono text-blue-500 font-bold">minio://vdr-documents</span>
+                <span className="font-mono text-accent font-bold">minio://vdr-documents</span>
               </div>
               <div className="flex justify-between py-1 border-b border-border/50">
                 <span className="text-text-muted">Object Key:</span>
